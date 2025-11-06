@@ -198,7 +198,9 @@ class DocumentationService
     {
         $toc = [];
 
-        preg_match_all('/^(#{1,6})\s+(.+)$/m', $markdown, $matches, PREG_SET_ORDER);
+        $markdownWithoutCodeBlocks = $this->removeCodeBlocks($markdown);
+
+        preg_match_all('/^(#{1,6})\s+(.+)$/m', $markdownWithoutCodeBlocks, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $match) {
             $level = strlen($match[1]);
@@ -212,6 +214,11 @@ class DocumentationService
         }
 
         return $toc;
+    }
+
+    private function removeCodeBlocks(string $markdown): string
+    {
+        return preg_replace('/```[\s\S]*?```/m', '', $markdown);
     }
 
     public function getAdjacentPages(string $slug): array
