@@ -22,10 +22,14 @@ class InstallDocumentation extends Command
         'lucide-react' => '^0.460.0',
     ];
 
+    private array $shadcnComponents = [
+        'sonner',
+    ];
+
     public function handle(): int
     {
         $this->info('╔════════════════════════════════════════════════════════╗');
-        $this->info('║  OiLab Laravel Documentation - Installation Wizard    ║');
+        $this->info('║  OiLab Laravel Documentation - Installation Wizard     ║');
         $this->info('╚════════════════════════════════════════════════════════╝');
         $this->newLine();
 
@@ -39,6 +43,7 @@ class InstallDocumentation extends Command
             'routes' => 'Routes file',
             'docs' => 'Documentation directory',
             'components' => 'React components',
+            'shadcn' => 'ShadCN UI components',
         ];
 
         $selectedSteps = [];
@@ -91,6 +96,10 @@ class InstallDocumentation extends Command
 
         $this->checkAndInstallNpmPackages();
 
+        if (isset($selectedSteps['shadcn'])) {
+            $this->installShadcnComponents();
+        }
+
         $this->newLine();
         $this->info('╔════════════════════════════════════════════════════════╗');
         $this->info('║  Installation Complete!                                ║');
@@ -118,6 +127,7 @@ class InstallDocumentation extends Command
             'routes' => ! File::exists(base_path('routes/documentation.php')),
             'docs' => ! File::exists(base_path(config('oi-documentation.docs_path', 'resources/docs'))),
             'components' => ! $this->areComponentsInstalled(),
+            'shadcn' => ! $this->areShadcnComponentsInstalled(),
             default => false,
         };
     }
@@ -231,6 +241,10 @@ class InstallDocumentation extends Command
                 'heading-large.tsx',
                 'heading-small.tsx',
                 'heading-xsmall.tsx',
+                'sign.tsx',
+            ],
+            'hooks' => [
+                'use-flash-messages.tsx',
             ],
             'layouts' => [
                 'documentation-layout.tsx',
@@ -437,5 +451,89 @@ php artisan serve
 
 Visit `http://localhost:8000` in your browser.
 MD;
+    }
+
+    private function areShadcnComponentsInstalled(): bool
+    {
+        $allInstalled = true;
+
+        foreach ($this->shadcnComponents as $component) {
+            $componentPath = resource_path("js/components/ui/{$component}.tsx");
+            if (! File::exists($componentPath)) {
+                $allInstalled = false;
+                break;
+            }
+        }
+
+        return $allInstalled;
+    }
+
+    private function installShadcnComponents(): void
+    {
+        $this->newLine();
+        $this->info('Installing ShadCN UI components...');
+        $this->newLine();
+
+        // Check if shadcn CLI is available
+        exec('npx shadcn@latest --version 2>&1', $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            $this->warn('⚠ Unable to verify shadcn CLI. Make sure you have Node.js and npm installed.');
+            $this->newLine();
+        }
+
+        $componentsToInstall = [];
+
+        foreach ($this->shadcnComponents as $component) {
+            $componentPath = resource_path("js/components/ui/{$component}.tsx");
+
+            if (! File::exists($componentPath)) {
+                $componentsToInstall[] = $component;
+            } else {
+                $this->line("  ✓ {$component} already installed");
+            }
+        }
+
+        if (empty($componentsToInstall)) {
+            $this->info('✓ All ShadCN UI components are already installed');
+
+            return;
+        }
+
+        $this->newLine();
+        $this->info('The following ShadCN UI components will be installed:');
+        foreach ($componentsToInstall as $component) {
+            $this->line("  • {$component}");
+        }
+        $this->newLine();
+
+        if (! $this->confirm('Would you like to install them now?', true)) {
+            $this->line('You can install them later with:');
+            foreach ($componentsToInstall as $component) {
+                $this->line("  npx shadcn@latest add {$component}");
+            }
+
+            return;
+        }
+
+        foreach ($componentsToInstall as $component) {
+            $this->info("Installing {$component}...");
+
+            $command = "npx shadcn@latest add {$component} --yes --overwrite";
+            $this->line("Running: {$command}");
+            $this->newLine();
+
+            passthru($command, $exitCode);
+
+            if ($exitCode === 0) {
+                $this->info("  ✓ {$component} installed successfully");
+            } else {
+                $this->error("  ✗ Failed to install {$component}");
+                $this->line('  You can install it manually with:');
+                $this->line("  npx shadcn@latest add {$component}");
+            }
+
+            $this->newLine();
+        }
     }
 }
