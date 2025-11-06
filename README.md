@@ -164,7 +164,8 @@ The package requires these npm packages (automatically installed by the wizard):
   "rehype-sanitize": "^6.0.0",
   "slugify": "^1.6.6",
   "shiki": "^1.0.0",
-  "lucide-react": "^0.460.0"
+  "lucide-react": "^0.460.0",
+  "usehooks-ts": "^3.3"
 }
 ```
 
