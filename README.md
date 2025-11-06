@@ -165,7 +165,7 @@ The package requires these npm packages (automatically installed by the wizard):
   "slugify": "^1.6.6",
   "shiki": "^1.0.0",
   "lucide-react": "^0.460.0",
-  "usehooks-ts": "^3.3"
+  "usehooks-ts": "^3.1.1"
 }
 ```
 
