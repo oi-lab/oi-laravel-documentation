@@ -43,6 +43,7 @@ The interactive installation wizard will:
 - ✓ Create `resources/docs/` with sample documentation
 - ✓ Install React components (layouts, pages, components)
 - ✓ Detect and install missing npm packages
+- ✓ Install ShadCN UI components (sonner for toast notifications)
 - ✓ Guide you through the setup process
 
 **Installation Options:**
@@ -167,6 +168,32 @@ The package requires these npm packages (automatically installed by the wizard):
 }
 ```
 
+## ShadCN UI Components
+
+The package uses ShadCN UI components for the user interface. The installation wizard automatically installs the required components using the ShadCN CLI:
+
+```bash
+npx shadcn@latest add sonner
+```
+
+**Currently installed components:**
+- `sonner` - Toast notifications for flash messages
+
+**Adding more components:**
+
+To add additional ShadCN UI components to the installation, edit the `$shadcnComponents` array in `src/Console/Commands/InstallDocumentation.php`:
+
+```php
+private array $shadcnComponents = [
+    'sonner',
+    'button',
+    'dialog',
+    // Add more components as needed
+];
+```
+
+The wizard will automatically install them when running `php artisan doc:install`.
+
 ## Commands
 
 ### Generate Navigation
@@ -276,10 +303,35 @@ The installation wizard automatically installs these React components:
 }
 ```
 
-**Note:** The components require shadcn/ui components. Make sure you have the following components installed:
-- `button`
-- `input`
-- `separator`
+### Hooks (`resources/js/hooks/`)
+- `use-flash-messages.tsx` - Hook for displaying flash messages using Sonner toasts
+
+**Note:** The components use ShadCN UI. The installation wizard automatically installs the required components (`sonner`). If you need additional ShadCN UI components, you can install them manually:
+
+```bash
+npx shadcn@latest add button
+npx shadcn@latest add input
+npx shadcn@latest add separator
+```
+
+### Using Toast Notifications
+
+The package includes a `useFlashMessages` hook that automatically displays Laravel flash messages as toast notifications using Sonner. The hook is already integrated in the `documentation-layout.tsx`.
+
+To send flash messages from your Laravel controllers:
+
+```php
+return redirect()->route('documentation.show', $slug)
+    ->with('success', 'Documentation updated successfully!');
+
+return redirect()->back()
+    ->with('error', 'Failed to update documentation');
+
+return redirect()->back()
+    ->with('info', 'Documentation is being processed');
+```
+
+The toast notifications will automatically appear with the appropriate styling (success, error, info).
 
 ## Workflow
 

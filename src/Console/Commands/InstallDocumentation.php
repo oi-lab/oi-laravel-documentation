@@ -20,6 +20,7 @@ class InstallDocumentation extends Command
         'slugify' => '^1.6.6',
         'shiki' => '^1.0.0',
         'lucide-react' => '^0.460.0',
+        'usehooks-ts' => '^3.3',
     ];
 
     private array $shadcnComponents = [
