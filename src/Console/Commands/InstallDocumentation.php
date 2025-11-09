@@ -124,9 +124,9 @@ class InstallDocumentation extends Command
         }
 
         return match ($step) {
-            'config' => ! File::exists(config_path('oi-documentation.php')),
+            'config' => ! File::exists(config_path('oi-laravel-documentation.php')),
             'routes' => ! File::exists(base_path('routes/documentation.php')),
-            'docs' => ! File::exists(base_path(config('oi-documentation.docs_path', 'resources/docs'))),
+            'docs' => ! File::exists(base_path(config('oi-laravel-documentation.docs_path', 'resources/docs'))),
             'components' => ! $this->areComponentsInstalled(),
             'shadcn' => ! $this->areShadcnComponentsInstalled(),
             default => false,
@@ -144,7 +144,7 @@ class InstallDocumentation extends Command
 
     private function publishConfig(bool $force): void
     {
-        $configPath = config_path('oi-documentation.php');
+        $configPath = config_path('oi-laravel-documentation.php');
 
         if (File::exists($configPath) && ! $force) {
             $this->warn('⚠ Config file already exists.');
@@ -191,7 +191,7 @@ class InstallDocumentation extends Command
 
     private function createDocumentationDirectory(bool $force): void
     {
-        $docsPath = base_path(config('oi-documentation.docs_path', 'resources/docs'));
+        $docsPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/docs'));
 
         if (File::exists($docsPath) && ! $force) {
             $this->warn("⚠ Documentation directory already exists at: {$docsPath}");

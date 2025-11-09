@@ -17,7 +17,7 @@ class GenDocNav extends Command
     {
         $this->info('Generating documentation navigation from meta.json files...');
 
-        $docsPath = base_path(config('oi-documentation.docs_path', 'resources/docs'));
+        $docsPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/docs'));
 
         if (! File::exists($docsPath)) {
             $this->error("Documentation directory not found: {$docsPath}");
@@ -94,7 +94,7 @@ class GenDocNav extends Command
         ];
 
         $sectionFiles = $this->getMarkdownFilesInDirectory($sectionPath, false);
-        $section['items'] = $this->processMarkdownFiles($sectionFiles, base_path(config('oi-documentation.docs_path', 'resources/docs')));
+        $section['items'] = $this->processMarkdownFiles($sectionFiles, base_path(config('oi-laravel-documentation.docs_path', 'resources/docs')));
 
         $subdirectories = File::directories($sectionPath);
         foreach ($subdirectories as $subdirectory) {
@@ -248,7 +248,7 @@ class GenDocNav extends Command
 
         $markdownFiles = $this->getMarkdownFilesInDirectory($subsectionPath);
 
-        $subsection['items'] = $this->processMarkdownFiles($markdownFiles, base_path(config('oi-documentation.docs_path', 'resources/docs')));
+        $subsection['items'] = $this->processMarkdownFiles($markdownFiles, base_path(config('oi-laravel-documentation.docs_path', 'resources/docs')));
 
         return $subsection;
     }
@@ -262,6 +262,6 @@ class GenDocNav extends Command
 
     private function getOutputPath(): string
     {
-        return base_path(config('oi-documentation.docs_path', 'resources/docs').'/'.config('oi-documentation.navigation_file', 'navigation.json'));
+        return base_path(config('oi-laravel-documentation.docs_path', 'resources/docs').'/'.config('oi-laravel-documentation.navigation_file', 'navigation.json'));
     }
 }

@@ -11,12 +11,12 @@ class DocumentationService
 {
     private function getDocsPath(): string
     {
-        return base_path(config('oi-documentation.docs_path', 'resources/docs'));
+        return base_path(config('oi-laravel-documentation.docs_path', 'resources/docs'));
     }
 
     private function getNavigationFile(): string
     {
-        return $this->getDocsPath().'/'.config('oi-documentation.navigation_file', 'navigation.json');
+        return $this->getDocsPath().'/'.config('oi-laravel-documentation.navigation_file', 'navigation.json');
     }
 
     public function getDocument(string $slug): ?array
@@ -142,7 +142,7 @@ class DocumentationService
             $slug = $pathToSlugMap[$resolvedPath] ?? null;
 
             if ($slug) {
-                $prefix = config('oi-documentation.route.prefix', 'documentation');
+                $prefix = config('oi-laravel-documentation.route.prefix', 'documentation');
 
                 return "[{$linkText}](/{$prefix}/{$slug})";
             }

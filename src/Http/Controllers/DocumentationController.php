@@ -49,13 +49,13 @@ class DocumentationController extends Controller
     {
         $query = strtolower(trim($request->input('q', '')));
 
-        $minLength = config('oi-documentation.search.min_query_length', 2);
+        $minLength = config('oi-laravel-documentation.search.min_query_length', 2);
 
         if (strlen($query) < $minLength) {
             return response()->json([]);
         }
 
-        $indexPath = base_path(config('oi-documentation.docs_path', 'resources/docs').'/'.config('oi-documentation.search_index_file', 'search-index.json'));
+        $indexPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/docs').'/'.config('oi-laravel-documentation.search_index_file', 'search-index.json'));
 
         if (! File::exists($indexPath)) {
             return response()->json([]);
@@ -101,8 +101,8 @@ class DocumentationController extends Controller
 
     private function extractExcerpt(string $content, string $query): string
     {
-        $length = config('oi-documentation.search.excerpt_length', 150);
-        $context = config('oi-documentation.search.excerpt_context', 50);
+        $length = config('oi-laravel-documentation.search.excerpt_length', 150);
+        $context = config('oi-laravel-documentation.search.excerpt_context', 50);
 
         $position = stripos($content, $query);
 

@@ -13,8 +13,8 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/oi-documentation.php',
-            'oi-documentation'
+            __DIR__.'/../config/oi-laravel-documentation.php',
+            'oi-laravel-documentation'
         );
 
         $this->app->singleton(DocumentationService::class, function ($app) {
@@ -26,7 +26,7 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/oi-documentation.php' => config_path('oi-documentation.php'),
+                __DIR__.'/../config/oi-laravel-documentation.php' => config_path('oi-laravel-documentation.php'),
             ], 'oi-documentation-config');
 
             $this->publishes([
@@ -44,7 +44,7 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
             ]);
         }
 
-        if (config('oi-documentation.route.enabled', true)) {
+        if (config('oi-laravel-documentation.route.enabled', true)) {
             $this->loadRoutesFrom(__DIR__.'/../stubs/routes/documentation.php');
         }
     }

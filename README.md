@@ -38,9 +38,9 @@ php artisan doc:install
 ```
 
 The interactive installation wizard will:
-- ✓ Publish the configuration file to `config/oi-documentation.php`
+- ✓ Publish the configuration file to `config/oi-laravel-documentation.php`
 - ✓ Publish routes to `routes/documentation.php`
-- ✓ Create `resources/docs/` with sample documentation
+- ✓ Create `resources/docs/` with sample documentation (customizable path)
 - ✓ Install React components (layouts, pages, components)
 - ✓ Detect and install missing npm packages
 - ✓ Install ShadCN UI components (sonner for toast notifications)
@@ -53,11 +53,12 @@ The interactive installation wizard will:
 
 ## Configuration
 
-The configuration file `config/oi-documentation.php` allows you to customize:
+The configuration file `config/oi-laravel-documentation.php` allows you to customize:
 
 ```php
 return [
-    // Path to documentation files
+    // Path to documentation files (relative to base_path())
+    // You can customize this to store docs anywhere, e.g., 'resources/markdown/docs'
     'docs_path' => 'resources/docs',
 
     // Navigation and search index filenames
@@ -79,6 +80,17 @@ return [
     ],
 ];
 ```
+
+### Custom Documentation Path
+
+You can customize the location of your documentation files by changing the `docs_path` setting:
+
+```php
+// config/oi-laravel-documentation.php
+'docs_path' => 'resources/markdown/docs', // Custom path
+```
+
+All commands (`doc:gen-nav`, `doc:gen-index`) will automatically use your custom path.
 
 ## Documentation Structure
 
