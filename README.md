@@ -53,6 +53,18 @@ The interactive installation wizard will:
 
 ## Configuration
 
+### Publishing the Configuration File
+
+If you need to customize the configuration, you can publish the config file separately:
+
+```bash
+php artisan vendor:publish --tag=oi-documentation-config
+```
+
+This will create `config/oi-laravel-documentation.php` in your application.
+
+### Configuration Options
+
 The configuration file `config/oi-laravel-documentation.php` allows you to customize:
 
 ```php

@@ -87,7 +87,7 @@ class DocumentationService
         ];
     }
 
-    private function extractFrontmatter(string $content): ?array
+    public function extractFrontmatter(string $content): ?array
     {
         if (! str_starts_with($content, '---')) {
             return null;
@@ -106,7 +106,7 @@ class DocumentationService
         }
     }
 
-    private function extractMarkdown(string $content): string
+    public function extractMarkdown(string $content): string
     {
         if (! str_starts_with($content, '---')) {
             return $content;
@@ -194,7 +194,7 @@ class DocumentationService
         return implode('/', $dirParts);
     }
 
-    private function extractTableOfContents(string $markdown): array
+    public function extractTableOfContents(string $markdown): array
     {
         $toc = [];
 
