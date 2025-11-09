@@ -89,6 +89,7 @@ class GenDocNav extends Command
             'title' => $meta['title'] ?? ucwords(str_replace('-', ' ', $sectionName)),
             'slug' => $sectionName,
             'order' => $meta['order'] ?? 999,
+            'description' => $meta['description'] ?? '',
             'items' => [],
             'subsections' => [],
         ];
