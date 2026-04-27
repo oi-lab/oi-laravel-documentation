@@ -18,8 +18,8 @@ A Laravel package for managing markdown-based documentation with hierarchical na
 
 ## Requirements
 
-- PHP 8.2 or higher
-- Laravel 11.x or 12.x
+- PHP 8.3 or higher (PHP 8.4+ recommended)
+- Laravel 11.x, 12.x or 13.x
 - Inertia.js with React
 - Node.js and npm
 

@@ -13,7 +13,7 @@ class GenDocIndex extends Command
     protected $description = 'Generate searchable index for documentation files';
 
     public function __construct(
-        public DocumentationService $documentationService
+        private readonly DocumentationService $documentationService
     ) {
         parent::__construct();
     }

@@ -402,7 +402,7 @@ This guide will help you install and configure the application.
 
 Before you begin, ensure you have the following installed:
 
-- PHP 8.2 or higher
+- PHP 8.3 or higher (PHP 8.4+ recommended)
 - Composer
 - Node.js and npm
 - A database (MySQL, PostgreSQL, SQLite)

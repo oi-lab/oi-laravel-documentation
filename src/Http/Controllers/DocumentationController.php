@@ -13,7 +13,7 @@ use OiLab\LaravelDocumentation\Services\DocumentationService;
 class DocumentationController extends Controller
 {
     public function __construct(
-        public DocumentationService $documentationService
+        private readonly DocumentationService $documentationService
     ) {}
 
     public function index(): Response
