@@ -393,8 +393,18 @@ Results are sorted by score and include contextual excerpts.
 
 ## License
 
-MIT
+This package is open-source software licensed under the [MIT license](LICENSE).
 
 ## Credits
 
-Created by OiLab
+**[Olivier Lacombe](https://www.olacombe.com)** - Creator and maintainer
+
+Olivier is a Product & Technology Director based in Montpellier, France, with over 20 years of experience innovating in UX/UI and emerging technologies. He specializes in guiding enterprises toward cutting-edge digital solutions, combining user-centered design with continuous optimization and artificial intelligence integration.
+
+**Projects & Resources:**
+- [OnAI](https://onai.olacombe.com) - Training courses and masterclasses on generative AI for businesses
+- [Promptr](https://promptr.olacombe.com) - Prompt engineering Management Platform
+
+## Support
+
+For support, please open an issue on the [GitHub repository](https://github.com/oi-lab/oi-laravel-ts/issues).
