@@ -18,8 +18,8 @@ A Laravel package for managing markdown-based documentation with hierarchical na
 
 ## Requirements
 
-- PHP 8.2 or higher
-- Laravel 11.x or 12.x
+- PHP 8.3 or higher
+- Laravel 11.x, 12.x or 13.x
 - Inertia.js with React
 - Node.js and npm
 
@@ -175,6 +175,17 @@ npm run build
 npm run dev
 ```
 
+## PHP Dependencies
+
+The package requires these Composer packages (automatically resolved):
+
+```json
+{
+  "illuminate/support": "^11.0|^12.0|^13.0",
+  "symfony/yaml": "^6.0|^7.0"
+}
+```
+
 ## NPM Dependencies
 
 The package requires these npm packages (automatically installed by the wizard):
@@ -296,6 +307,7 @@ The installation wizard automatically installs these React components:
 - `documentation-search.tsx` - Search interface with live results
 - `documentation-toc.tsx` - Table of contents sidebar
 - `heading.tsx`, `heading-large.tsx`, `heading-small.tsx`, `heading-xsmall.tsx` - Typography components
+- `sign.tsx` - Signature SVG component
 
 ### Layouts (`resources/js/layouts/`)
 - `documentation-layout.tsx` - Main documentation layout wrapper
