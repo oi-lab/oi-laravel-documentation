@@ -1,4 +1,11 @@
+<img src="./assets/github-preview.png" alt="OI Laravel TypeScript Generator" width="100%" />
+
 # OiLab Laravel Documentation
+
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/oi-lab/oi-laravel-documentation.svg)](https://packagist.org/packages/oi-lab/oi-laravel-documentation)
+[![Total Downloads](https://img.shields.io/packagist/dt/oi-lab/oi-laravel-documentation.svg)](https://packagist.org/packages/oi-lab/oi-laravel-documentation)
+[![Tests](https://img.shields.io/github/actions/workflow/status/oi-lab/oi-laravel-documentation/tests.yml?label=tests)](https://github.com/oi-lab/oi-laravel-documentation/actions)
+[![License](https://img.shields.io/github/license/oi-lab/oi-laravel-documentation)](LICENSE)
 
 A Laravel package for managing markdown-based documentation with hierarchical navigation and full-text search.
 
