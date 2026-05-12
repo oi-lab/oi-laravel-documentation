@@ -10,7 +10,7 @@ return [
     | This is relative to the base_path() of your Laravel application.
     |
     */
-    'docs_path' => 'resources/docs',
+    'docs_path' => 'resources/markdown/docs',
 
     /*
     |--------------------------------------------------------------------------

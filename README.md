@@ -48,7 +48,7 @@ The interactive installation wizard will:
 - ✓ Publish the configuration file to `config/oi-laravel-documentation.php`
 - ✓ Publish routes to `routes/documentation.php`
 - ✓ Ask whether the documentation is public or restricted by a middleware
-- ✓ Create `resources/docs/` with sample documentation (customizable path)
+- ✓ Create `resources/markdown/docs/` with sample documentation (customizable path)
 - ✓ Install React components (layouts, pages, components) into a configurable directory
 - ✓ Detect and install missing JS packages with your package manager
 - ✓ Install ShadCN UI components (sonner for toast notifications)
@@ -96,8 +96,8 @@ The configuration file `config/oi-laravel-documentation.php` allows you to custo
 ```php
 return [
     // Path to documentation files (relative to base_path())
-    // You can customize this to store docs anywhere, e.g., 'resources/markdown/docs'
-    'docs_path' => 'resources/docs',
+    // You can customize this to store docs anywhere, e.g., 'resources/docs'
+    'docs_path' => 'resources/markdown/docs',
 
     // Where the published React components are installed (keep it under resources/js/)
     'components_path' => 'resources/js/components/documentation',
@@ -128,7 +128,7 @@ You can customize the location of your documentation files by changing the `docs
 
 ```php
 // config/oi-laravel-documentation.php
-'docs_path' => 'resources/markdown/docs', // Custom path
+'docs_path' => 'resources/docs', // Custom path
 ```
 
 All commands (`doc:gen-nav`, `doc:gen-index`) will automatically use your custom path.
@@ -138,7 +138,7 @@ All commands (`doc:gen-nav`, `doc:gen-index`) will automatically use your custom
 ### Directory Layout
 
 ```
-resources/docs/
+resources/markdown/docs/
 ├── meta.json                    # Root metadata
 ├── navigation.json              # Auto-generated navigation
 ├── search-index.json            # Auto-generated search index
@@ -269,6 +269,21 @@ The wizard will automatically install them when running `php artisan doc:install
 
 ## Commands
 
+### Add a Documentation Page
+
+Create a new markdown page interactively. The command asks which folder the page
+belongs to (with a selection prompt) and lets you create a new folder on the fly:
+
+```bash
+php artisan doc:add-page
+
+# Regenerate navigation and search index automatically afterwards
+php artisan doc:add-page --regenerate
+```
+
+It writes a markdown file with frontmatter into the chosen folder (and creates a
+`meta.json` for any new folder), then optionally runs `doc:gen-nav` and `doc:gen-index`.
+
 ### Generate Navigation
 
 Generate the navigation structure from your documentation files:
@@ -277,7 +292,7 @@ Generate the navigation structure from your documentation files:
 php artisan doc:gen-nav
 ```
 
-This scans `resources/docs/` and creates `navigation.json`.
+This scans `resources/markdown/docs/` and creates `navigation.json`.
 
 ### Generate Search Index
 
@@ -413,7 +428,7 @@ The toast notifications will automatically appear with the appropriate styling (
 
 ## Workflow
 
-1. Write markdown files in `resources/docs/`
+1. Write markdown files in `resources/markdown/docs/`
 2. Add `meta.json` files for sections
 3. Run `php artisan doc:gen-nav` to generate navigation
 4. Run `php artisan doc:gen-index` to generate search index

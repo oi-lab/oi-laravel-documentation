@@ -3,6 +3,7 @@
 namespace OiLab\LaravelDocumentation;
 
 use Illuminate\Support\ServiceProvider;
+use OiLab\LaravelDocumentation\Console\Commands\AddDocPage;
 use OiLab\LaravelDocumentation\Console\Commands\GenDocIndex;
 use OiLab\LaravelDocumentation\Console\Commands\GenDocNav;
 use OiLab\LaravelDocumentation\Console\Commands\InstallDocumentation;
@@ -30,7 +31,7 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
             ], 'oi-documentation-config');
 
             $this->publishes([
-                __DIR__.'/../stubs/docs' => base_path('resources/docs'),
+                __DIR__.'/../stubs/docs' => base_path('resources/markdown/docs'),
             ], 'oi-documentation-stubs');
 
             $this->publishes([
@@ -41,6 +42,7 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
                 GenDocNav::class,
                 GenDocIndex::class,
                 InstallDocumentation::class,
+                AddDocPage::class,
             ]);
         }
 

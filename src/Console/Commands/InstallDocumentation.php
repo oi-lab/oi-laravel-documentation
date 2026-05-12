@@ -115,8 +115,10 @@ class InstallDocumentation extends Command
         $this->info('║  Installation Complete!                                ║');
         $this->info('╚════════════════════════════════════════════════════════╝');
         $this->newLine();
+        $docsPath = config('oi-laravel-documentation.docs_path', 'resources/markdown/docs');
+
         $this->info('📝 Next steps:');
-        $this->line('  1. Add markdown files to resources/docs/');
+        $this->line("  1. Add markdown files to {$docsPath}/ (or run: php artisan doc:add-page)");
         $this->line('  2. Run: php artisan doc:gen-nav');
         $this->line('  3. Run: php artisan doc:gen-index');
         $this->line('  4. Visit /documentation in your browser');
@@ -135,7 +137,7 @@ class InstallDocumentation extends Command
         return match ($step) {
             'config' => ! File::exists(config_path('oi-laravel-documentation.php')),
             'routes' => ! File::exists(base_path('routes/documentation.php')),
-            'docs' => ! File::exists(base_path(config('oi-laravel-documentation.docs_path', 'resources/docs'))),
+            'docs' => ! File::exists(base_path(config('oi-laravel-documentation.docs_path', 'resources/markdown/docs'))),
             'components' => ! $this->areComponentsInstalled(),
             'shadcn' => ! $this->areShadcnComponentsInstalled(),
             default => false,
@@ -306,7 +308,7 @@ class InstallDocumentation extends Command
 
     private function createDocumentationDirectory(bool $force): void
     {
-        $docsPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/docs'));
+        $docsPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/markdown/docs'));
 
         if (File::exists($docsPath) && ! $force) {
             $this->warn("⚠ Documentation directory already exists at: {$docsPath}");

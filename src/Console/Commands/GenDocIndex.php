@@ -27,7 +27,7 @@ class GenDocIndex extends Command
 
         $index = $this->indexSections($navigation['sections']);
 
-        $indexPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/docs').'/'.config('oi-laravel-documentation.search_index_file', 'search-index.json'));
+        $indexPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/markdown/docs').'/'.config('oi-laravel-documentation.search_index_file', 'search-index.json'));
         File::put($indexPath, json_encode($index, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         $this->info('✅ Index generated successfully with '.count($index).' documents');

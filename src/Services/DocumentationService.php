@@ -11,7 +11,7 @@ class DocumentationService
 {
     private function getDocsPath(): string
     {
-        return base_path(config('oi-laravel-documentation.docs_path', 'resources/docs'));
+        return base_path(config('oi-laravel-documentation.docs_path', 'resources/markdown/docs'));
     }
 
     private function getNavigationFile(): string

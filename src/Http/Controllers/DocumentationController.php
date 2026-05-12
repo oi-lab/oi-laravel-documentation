@@ -55,7 +55,7 @@ class DocumentationController extends Controller
             return response()->json([]);
         }
 
-        $indexPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/docs').'/'.config('oi-laravel-documentation.search_index_file', 'search-index.json'));
+        $indexPath = base_path(config('oi-laravel-documentation.docs_path', 'resources/markdown/docs').'/'.config('oi-laravel-documentation.search_index_file', 'search-index.json'));
 
         if (! File::exists($indexPath)) {
             return response()->json([]);
