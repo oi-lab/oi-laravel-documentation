@@ -19,16 +19,16 @@ A Laravel package for managing markdown-based documentation with hierarchical na
 - **Table of contents** - Automatically extract headings
 - **Link transformation** - Convert relative markdown links to route URLs
 - **Adjacent page navigation** - Previous/Next page links
-- **React components** - Pre-built Inertia.js + React components for documentation UI
+- **React components** - Pre-built Inertia.js + React components for documentation UI, installed into a configurable directory
 - **Syntax highlighting** - Code blocks with Shiki syntax highlighting
-- **Interactive installation** - User-friendly installation wizard
+- **Interactive installation** - Installation wizard with package manager detection (pnpm/npm/yarn) and access control prompts
 
 ## Requirements
 
 - PHP 8.3 or higher
 - Laravel 11.x, 12.x or 13.x
 - Inertia.js with React
-- Node.js and npm
+- Node.js with a JS package manager (pnpm, npm or yarn)
 
 ## Installation
 
@@ -47,11 +47,30 @@ php artisan doc:install
 The interactive installation wizard will:
 - ✓ Publish the configuration file to `config/oi-laravel-documentation.php`
 - ✓ Publish routes to `routes/documentation.php`
+- ✓ Ask whether the documentation is public or restricted by a middleware
 - ✓ Create `resources/docs/` with sample documentation (customizable path)
-- ✓ Install React components (layouts, pages, components)
-- ✓ Detect and install missing npm packages
+- ✓ Install React components (layouts, pages, components) into a configurable directory
+- ✓ Detect and install missing JS packages with your package manager
 - ✓ Install ShadCN UI components (sonner for toast notifications)
 - ✓ Guide you through the setup process
+
+**Documentation Access:**
+
+When the config file is published, the wizard asks how the documentation should be reached:
+- **Public** - keeps the route on the `web` middleware only.
+- **Authenticated users only** - adds the `auth` middleware.
+- **Custom middleware** - prompts for one or more middleware names (comma separated).
+
+Your choice is written to `route.middleware` in `config/oi-laravel-documentation.php`; you can edit it there anytime.
+
+**Package Manager:**
+
+When JS dependencies (or ShadCN components) need to be installed, the wizard asks which package manager to use and lets you pick between `pnpm`, `npm` and `yarn`. The one detected in your project is preselected by default:
+- the `packageManager` field in `package.json`, if present;
+- otherwise the lockfile found in the project (`pnpm-lock.yaml`, `yarn.lock` or `package-lock.json`);
+- falling back to `npm`.
+
+The corresponding commands are used under the hood (`pnpm add` / `npm install` / `yarn add` for dependencies, `pnpm dlx` / `npx` / `yarn dlx` for ShadCN).
 
 **Installation Options:**
 - Use `--force` to overwrite existing files
@@ -80,6 +99,9 @@ return [
     // You can customize this to store docs anywhere, e.g., 'resources/markdown/docs'
     'docs_path' => 'resources/docs',
 
+    // Where the published React components are installed (keep it under resources/js/)
+    'components_path' => 'resources/js/components/documentation',
+
     // Navigation and search index filenames
     'navigation_file' => 'navigation.json',
     'search_index_file' => 'search-index.json',
@@ -88,7 +110,7 @@ return [
     'route' => [
         'enabled' => true,
         'prefix' => 'documentation',
-        'middleware' => ['web'],
+        'middleware' => ['web'], // e.g. ['web', 'auth'] to require authentication
     ],
 
     // Search settings
@@ -193,9 +215,9 @@ The package requires these Composer packages (automatically resolved):
 }
 ```
 
-## NPM Dependencies
+## JS Dependencies
 
-The package requires these npm packages (automatically installed by the wizard):
+The package requires these JS packages (automatically installed by the wizard, using the package manager you select — `pnpm`, `npm` or `yarn`):
 
 ```json
 {
@@ -207,16 +229,24 @@ The package requires these npm packages (automatically installed by the wizard):
   "slugify": "^1.6.6",
   "shiki": "^1.0.0",
   "lucide-react": "^0.460.0",
-  "usehooks-ts": "^3.1.1"
+  "usehooks-ts": "^3.1.1",
+  "class-variance-authority": "^0.7.0"
 }
 ```
 
 ## ShadCN UI Components
 
-The package uses ShadCN UI components for the user interface. The installation wizard automatically installs the required components using the ShadCN CLI:
+The package uses ShadCN UI components for the user interface. The installation wizard automatically installs the required components using the ShadCN CLI, run through your selected package manager:
 
 ```bash
+# pnpm
+pnpm dlx shadcn@latest add sonner
+
+# npm
 npx shadcn@latest add sonner
+
+# yarn
+yarn dlx shadcn@latest add sonner
 ```
 
 **Currently installed components:**
@@ -308,16 +338,20 @@ class CustomController extends Controller
 
 The installation wizard automatically installs these React components:
 
-### Components (`resources/js/components/`)
+### Components (`resources/js/components/documentation/`)
 - `documentation-markdown-content.tsx` - Renders markdown with syntax highlighting
 - `documentation-navigation.tsx` - Hierarchical navigation sidebar
 - `documentation-search.tsx` - Search interface with live results
 - `documentation-toc.tsx` - Table of contents sidebar
-- `heading.tsx`, `heading-large.tsx`, `heading-small.tsx`, `heading-xsmall.tsx` - Typography components
+- `documentation-heading.tsx` - Typography component with `size` variants (`xs`, `sm`, `default`, `lg`) built with `cva`, the same way ShadCN UI components are
+- `documentation-header.tsx` - Sticky header (logo, search, navigation links)
+- `documentation-footer.tsx` - Footer
 - `sign.tsx` - Signature SVG component
 
+> The components directory is configurable. Change `components_path` in `config/oi-laravel-documentation.php` to install them elsewhere (keep it under `resources/js/` so the `@/` import alias keeps working — the wizard rewrites the imports accordingly).
+
 ### Layouts (`resources/js/layouts/`)
-- `documentation-layout.tsx` - Main documentation layout wrapper
+- `documentation-layout.tsx` - Main documentation layout wrapper (composes `documentation-header.tsx` + `documentation-footer.tsx`, mirroring the Laravel React starter kit layout structure)
 
 ### Pages (`resources/js/pages/documentation/`)
 - `index.tsx` - Documentation homepage
@@ -409,6 +443,10 @@ The search endpoint scores results based on:
 - Content match: +1 point
 
 Results are sorted by score and include contextual excerpts.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of notable changes.
 
 ## License
 

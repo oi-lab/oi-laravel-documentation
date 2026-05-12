@@ -1,9 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import DocumentationMarkdownContent from '@/components/documentation-markdown-content';
-import DocumentationNavigation from '@/components/documentation-navigation';
-import DocumentationToc from '@/components/documentation-toc';
+import DocumentationMarkdownContent from '@/components/documentation/documentation-markdown-content';
+import DocumentationNavigation from '@/components/documentation/documentation-navigation';
+import DocumentationToc from '@/components/documentation/documentation-toc';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import DocumentationLayout from '@/layouts/documentation-layout';

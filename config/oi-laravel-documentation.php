@@ -14,6 +14,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Components Path
+    |--------------------------------------------------------------------------
+    |
+    | The directory (relative to the base path) where the published React
+    | components for the documentation UI are installed. Keep this under
+    | "resources/js/" so the components can keep using the "@/" import alias.
+    |
+    */
+    'components_path' => 'resources/js/components/documentation',
+
+    /*
+    |--------------------------------------------------------------------------
     | Navigation File
     |--------------------------------------------------------------------------
     |

@@ -2,7 +2,7 @@ import { Copy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'usehooks-ts';
 
-import HeadingSmall from '@/components/heading-small';
+import DocumentationHeading from '@/components/documentation/documentation-heading';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -75,7 +75,7 @@ export default function DocumentationToc({
             {/* Table of Contents */}
             {tableOfContents.length > 0 && (
                 <div className="sticky top-20 space-y-4 p-4">
-                    <HeadingSmall title={'On this page'} />
+                    <DocumentationHeading size="sm" title={'On this page'} />
                     <nav className="border-l">
                         {tableOfContents
                             .filter((item) => item.level > 1 && item.level <= 3)

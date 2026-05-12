@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import HeadingSmall from '@/components/heading-small';
+import DocumentationHeading from '@/components/documentation/documentation-heading';
 
 interface NavigationItem {
     title: string;
@@ -170,7 +170,7 @@ export default function DocumentationNavigation({
 }: DocumentationNavigationProps) {
     return (
         <div className="sticky top-20 space-y-4 p-4">
-            <HeadingSmall title="Summary" />
+            <DocumentationHeading size="sm" title="Summary" />
             <nav className="space-y-4">
                 {sections.map((section) => (
                     <NavigationMainSection

@@ -1,4 +1,4 @@
-import DocumentationNavigation from '@/components/documentation-navigation';
+import DocumentationNavigation from '@/components/documentation/documentation-navigation';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import DocumentationLayout from '@/layouts/documentation-layout';

@@ -4,9 +4,14 @@ namespace OiLab\LaravelDocumentation\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class InstallDocumentation extends Command
 {
+    private const DEFAULT_COMPONENTS_PATH = 'resources/js/components/documentation';
+
+    private const DEFAULT_COMPONENTS_ALIAS = '@/components/documentation';
+
     protected $signature = 'doc:install {--force : Overwrite existing files}';
 
     protected $description = 'Install documentation structure and files';
@@ -20,12 +25,15 @@ class InstallDocumentation extends Command
         'slugify' => '^1.6.6',
         'shiki' => '^1.0.0',
         'lucide-react' => '^0.460.0',
-        'usehooks-ts' => '^3.1.1'
+        'usehooks-ts' => '^3.1.1',
+        'class-variance-authority' => '^0.7.0',
     ];
 
     private array $shadcnComponents = [
         'sonner',
     ];
+
+    private ?string $packageManager = null;
 
     public function handle(): int
     {
@@ -81,6 +89,7 @@ class InstallDocumentation extends Command
 
         if (isset($selectedSteps['config'])) {
             $this->publishConfig($force);
+            $this->configureRouteAccess();
         }
 
         if (isset($selectedSteps['routes'])) {
@@ -135,11 +144,50 @@ class InstallDocumentation extends Command
 
     private function areComponentsInstalled(): bool
     {
-        $componentsPath = resource_path('js/components/documentation-markdown-content.tsx');
+        $componentsPath = base_path($this->componentsPath().'/documentation-markdown-content.tsx');
+        $headingPath = base_path($this->componentsPath().'/documentation-heading.tsx');
         $layoutPath = resource_path('js/layouts/documentation-layout.tsx');
         $indexPage = resource_path('js/pages/documentation/index.tsx');
 
-        return File::exists($componentsPath) && File::exists($layoutPath) && File::exists($indexPage);
+        return File::exists($componentsPath)
+            && File::exists($headingPath)
+            && File::exists($layoutPath)
+            && File::exists($indexPage);
+    }
+
+    private function componentsPath(): string
+    {
+        $path = (string) config('oi-laravel-documentation.components_path', self::DEFAULT_COMPONENTS_PATH);
+
+        return trim(str_replace('\\', '/', $path), '/');
+    }
+
+    private function componentsAlias(): string
+    {
+        $path = $this->componentsPath();
+
+        if (Str::startsWith($path, 'resources/js/')) {
+            return '@/'.Str::after($path, 'resources/js/');
+        }
+
+        return $path;
+    }
+
+    private function writeStubFile(string $sourcePath, string $targetPath): void
+    {
+        $contents = File::get($sourcePath);
+
+        $alias = $this->componentsAlias();
+
+        if ($alias !== self::DEFAULT_COMPONENTS_ALIAS) {
+            $contents = str_replace(
+                self::DEFAULT_COMPONENTS_ALIAS.'/',
+                rtrim($alias, '/').'/',
+                $contents
+            );
+        }
+
+        File::put($targetPath, $contents);
     }
 
     private function publishConfig(bool $force): void
@@ -158,6 +206,73 @@ class InstallDocumentation extends Command
         ]);
 
         $this->info('✓ Published configuration file');
+    }
+
+    private function configureRouteAccess(): void
+    {
+        $configPath = config_path('oi-laravel-documentation.php');
+
+        if (! File::exists($configPath)) {
+            return;
+        }
+
+        $this->newLine();
+
+        $public = 'Public - anyone can access the documentation';
+        $auth = 'Authenticated users only (adds the "auth" middleware)';
+        $custom = 'Restricted by a custom middleware';
+
+        $choice = $this->choice(
+            'How should the documentation be accessible?',
+            [$public, $auth, $custom],
+            $public
+        );
+
+        $middleware = ['web'];
+
+        if ($choice === $auth) {
+            $middleware[] = 'auth';
+        } elseif ($choice === $custom) {
+            $answer = (string) $this->ask('Enter the middleware name(s), comma separated', 'auth');
+
+            foreach (explode(',', $answer) as $name) {
+                $name = trim($name);
+
+                if ($name !== '' && ! in_array($name, $middleware, true)) {
+                    $middleware[] = $name;
+                }
+            }
+        }
+
+        $this->applyRouteMiddleware($configPath, $middleware);
+    }
+
+    /**
+     * @param  list<string>  $middleware
+     */
+    private function applyRouteMiddleware(string $configPath, array $middleware): void
+    {
+        $contents = File::get($configPath);
+
+        $replacement = "'middleware' => ['".implode("', '", $middleware)."'],";
+
+        $updated = preg_replace(
+            "/'middleware'\s*=>\s*\[[^\]]*\],/",
+            $replacement,
+            $contents,
+            1,
+            $count
+        );
+
+        if ($count > 0 && $updated !== null) {
+            File::put($configPath, $updated);
+            $this->info('✓ Documentation route middleware set to: ['.implode(', ', $middleware).']');
+
+            return;
+        }
+
+        $this->warn('⚠ Could not update the route middleware automatically.');
+        $this->line("  Set 'route.middleware' to [".implode(', ', $middleware)."] in config/oi-laravel-documentation.php manually.");
     }
 
     private function publishRoutes(bool $force): void
@@ -230,58 +345,141 @@ class InstallDocumentation extends Command
 
     private function installReactComponents(bool $force): void
     {
-        $this->info('Installing React components...');
+        $componentsPath = $this->componentsPath();
 
-        $mappings = [
-            'components' => [
-                'documentation-markdown-content.tsx',
-                'documentation-navigation.tsx',
-                'documentation-search.tsx',
-                'documentation-toc.tsx',
-                'heading.tsx',
-                'heading-large.tsx',
-                'heading-small.tsx',
-                'heading-xsmall.tsx',
-                'sign.tsx',
+        $this->info("Installing React components into {$componentsPath}/ ...");
+
+        if (! Str::startsWith($componentsPath, 'resources/js/')) {
+            $this->warn("⚠ components_path is outside resources/js/ - the \"@/\" imports inside the published files may need manual fixing.");
+        }
+
+        $stubsRoot = __DIR__.'/../../../stubs/js';
+
+        $groups = [
+            [
+                'source' => "{$stubsRoot}/components",
+                'target' => base_path($componentsPath),
+                'label' => $componentsPath,
+                'files' => [
+                    'documentation-markdown-content.tsx',
+                    'documentation-navigation.tsx',
+                    'documentation-search.tsx',
+                    'documentation-toc.tsx',
+                    'documentation-heading.tsx',
+                    'documentation-header.tsx',
+                    'documentation-footer.tsx',
+                    'sign.tsx',
+                ],
             ],
-            'hooks' => [
-                'use-flash-messages.tsx',
+            [
+                'source' => "{$stubsRoot}/hooks",
+                'target' => resource_path('js/hooks'),
+                'label' => 'resources/js/hooks',
+                'files' => [
+                    'use-flash-messages.tsx',
+                ],
             ],
-            'layouts' => [
-                'documentation-layout.tsx',
+            [
+                'source' => "{$stubsRoot}/layouts",
+                'target' => resource_path('js/layouts'),
+                'label' => 'resources/js/layouts',
+                'files' => [
+                    'documentation-layout.tsx',
+                ],
             ],
-            'pages/documentation' => [
-                'index.tsx',
-                'show.tsx',
+            [
+                'source' => "{$stubsRoot}/pages",
+                'target' => resource_path('js/pages/documentation'),
+                'label' => 'resources/js/pages/documentation',
+                'files' => [
+                    'index.tsx',
+                    'show.tsx',
+                ],
             ],
         ];
 
-        foreach ($mappings as $directory => $files) {
-            $targetDir = resource_path("js/{$directory}");
-            File::ensureDirectoryExists($targetDir);
+        foreach ($groups as $group) {
+            File::ensureDirectoryExists($group['target']);
 
-            foreach ($files as $file) {
-                $sourcePath = __DIR__."/../../../stubs/js/{$directory}/{$file}";
-                $targetPath = "{$targetDir}/{$file}";
-
-                // For pages, remove the /documentation part from source path
-                if ($directory === 'pages/documentation') {
-                    $sourcePath = __DIR__."/../../../stubs/js/pages/{$file}";
-                }
+            foreach ($group['files'] as $file) {
+                $sourcePath = "{$group['source']}/{$file}";
+                $targetPath = "{$group['target']}/{$file}";
+                $relLabel = "{$group['label']}/{$file}";
 
                 if (File::exists($targetPath) && ! $force) {
-                    if ($this->confirm("  File {$directory}/{$file} already exists. Overwrite?", false)) {
-                        File::copy($sourcePath, $targetPath);
-                        $this->line("  ↻ Overwritten: {$directory}/{$file}");
+                    if ($this->confirm("  File {$relLabel} already exists. Overwrite?", false)) {
+                        $this->writeStubFile($sourcePath, $targetPath);
+                        $this->line("  ↻ Overwritten: {$relLabel}");
                     } else {
-                        $this->line("  ⊘ Skipped: {$directory}/{$file}");
+                        $this->line("  ⊘ Skipped: {$relLabel}");
                     }
                 } else {
-                    File::copy($sourcePath, $targetPath);
-                    $this->line("  ✓ Installed: {$directory}/{$file}");
+                    $this->writeStubFile($sourcePath, $targetPath);
+                    $this->line("  ✓ Installed: {$relLabel}");
                 }
             }
         }
+    }
+
+    private function resolvePackageManager(): string
+    {
+        if ($this->packageManager !== null) {
+            return $this->packageManager;
+        }
+
+        $detected = $this->detectPackageManager();
+
+        $choices = ['pnpm', 'npm', 'yarn'];
+
+        $this->packageManager = $this->choice(
+            'Which package manager do you want to use?',
+            $choices,
+            $detected
+        );
+
+        return $this->packageManager;
+    }
+
+    private function detectPackageManager(): string
+    {
+        $packageJsonPath = base_path('package.json');
+
+        if (File::exists($packageJsonPath)) {
+            $packageJson = json_decode(File::get($packageJsonPath), true) ?: [];
+
+            if (! empty($packageJson['packageManager']) && is_string($packageJson['packageManager'])) {
+                $name = strtolower(explode('@', $packageJson['packageManager'])[0]);
+
+                if (in_array($name, ['pnpm', 'npm', 'yarn'], true)) {
+                    return $name;
+                }
+            }
+        }
+
+        return match (true) {
+            File::exists(base_path('pnpm-lock.yaml')) => 'pnpm',
+            File::exists(base_path('yarn.lock')) => 'yarn',
+            File::exists(base_path('package-lock.json')) => 'npm',
+            default => 'npm',
+        };
+    }
+
+    private function packageInstallCommand(string $packages): string
+    {
+        return match ($this->resolvePackageManager()) {
+            'pnpm' => "pnpm add {$packages}",
+            'yarn' => "yarn add {$packages}",
+            default => "npm install {$packages}",
+        };
+    }
+
+    private function packageDlxCommand(string $command): string
+    {
+        return match ($this->resolvePackageManager()) {
+            'pnpm' => "pnpm dlx {$command}",
+            'yarn' => "yarn dlx {$command}",
+            default => "npx {$command}",
+        };
     }
 
     private function checkAndInstallNpmPackages(): void
@@ -323,15 +521,16 @@ class InstallDocumentation extends Command
         }
         $this->newLine();
 
+        $packages = collect($missingPackages)
+            ->map(fn ($version, $package) => "{$package}@{$version}")
+            ->join(' ');
+
         if ($this->confirm('Would you like to install them now?', true)) {
-            $packages = collect($missingPackages)
-                ->map(fn ($version, $package) => "{$package}@{$version}")
-                ->join(' ');
+            $command = $this->packageInstallCommand($packages);
 
             $this->info('Installing npm packages...');
             $this->newLine();
 
-            $command = "npm install {$packages}";
             $this->line("Running: {$command}");
             $this->newLine();
 
@@ -348,10 +547,7 @@ class InstallDocumentation extends Command
             }
         } else {
             $this->line('You can install them later with:');
-            $packages = collect($missingPackages)
-                ->map(fn ($version, $package) => "{$package}@{$version}")
-                ->join(' ');
-            $this->line("npm install {$packages}");
+            $this->line('  '.$this->packageInstallCommand($packages));
         }
     }
 
@@ -476,7 +672,7 @@ MD;
         $this->newLine();
 
         // Check if shadcn CLI is available
-        exec('npx shadcn@latest --version 2>&1', $output, $exitCode);
+        exec($this->packageDlxCommand('shadcn@latest --version').' 2>&1', $output, $exitCode);
 
         if ($exitCode !== 0) {
             $this->warn('⚠ Unable to verify shadcn CLI. Make sure you have Node.js and npm installed.');
@@ -511,7 +707,7 @@ MD;
         if (! $this->confirm('Would you like to install them now?', true)) {
             $this->line('You can install them later with:');
             foreach ($componentsToInstall as $component) {
-                $this->line("  npx shadcn@latest add {$component}");
+                $this->line('  '.$this->packageDlxCommand("shadcn@latest add {$component}"));
             }
 
             return;
@@ -520,7 +716,7 @@ MD;
         foreach ($componentsToInstall as $component) {
             $this->info("Installing {$component}...");
 
-            $command = "npx shadcn@latest add {$component} --yes --overwrite";
+            $command = $this->packageDlxCommand("shadcn@latest add {$component} --yes --overwrite");
             $this->line("Running: {$command}");
             $this->newLine();
 
@@ -531,7 +727,7 @@ MD;
             } else {
                 $this->error("  ✗ Failed to install {$component}");
                 $this->line('  You can install it manually with:');
-                $this->line("  npx shadcn@latest add {$component}");
+                $this->line('  '.$this->packageDlxCommand("shadcn@latest add {$component}"));
             }
 
             $this->newLine();
