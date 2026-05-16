@@ -1,0 +1,7 @@
+{
+    "type": "package",
+    "name": "oi-lab/oi-laravel-documentation",
+    "title": "OI Laravel Documentation",
+    "description": "Markdown-based documentation with navigation, search, and React components",
+    "order": 50
+}
