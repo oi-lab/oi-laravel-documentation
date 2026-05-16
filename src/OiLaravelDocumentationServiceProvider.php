@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use OiLab\LaravelDocumentation\Console\Commands\AddDocPage;
 use OiLab\LaravelDocumentation\Console\Commands\GenDocIndex;
 use OiLab\LaravelDocumentation\Console\Commands\GenDocNav;
+use OiLab\LaravelDocumentation\Console\Commands\ImportPackageDocs;
 use OiLab\LaravelDocumentation\Console\Commands\InstallDocumentation;
 use OiLab\LaravelDocumentation\Services\DocumentationService;
 
@@ -43,6 +44,7 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
                 GenDocIndex::class,
                 InstallDocumentation::class,
                 AddDocPage::class,
+                ImportPackageDocs::class,
             ]);
         }
 
