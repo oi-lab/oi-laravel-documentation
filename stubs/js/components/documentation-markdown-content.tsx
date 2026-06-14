@@ -19,6 +19,7 @@ function escapeHtml(text: string): string {
         '"': '&quot;',
         "'": '&#039;',
     };
+
     return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
@@ -38,7 +39,6 @@ function Heading({ level, children }: HeadingProps) {
     const id = slugify(text.replaceAll('/', '-'), {
         lower: true,
         strict: true,
-        remove: /[*+~.()'"!:@]/g,
     });
 
     const handleCopyLink = async () => {
@@ -56,20 +56,20 @@ function Heading({ level, children }: HeadingProps) {
         'group relative scroll-mt-20 font-bold tracking-tight',
         {
             hidden: isH1,
-            'mt-10 text-3xl first:mt-0': level === 2,
-            'mt-8 text-2xl': level === 3,
-            'mt-6 text-xl': level === 4,
-            'mt-4 text-lg': level === 5,
-            'mt-4 text-base': level === 6,
+            'mt-6 text-2xl first:mt-0 md:mt-10 md:text-3xl': level === 2,
+            'mt-5 text-xl md:mt-8 md:text-2xl': level === 3,
+            'mt-4 text-lg md:mt-6 md:text-xl': level === 4,
+            'mt-3 text-base md:mt-4 md:text-lg': level === 5,
+            'mt-3 text-sm md:mt-4 md:text-base': level === 6,
         },
     );
 
     return (
-        <Tag id={id} className={baseClasses}>
+        <Tag data-slot={'heading'} data-level={level} id={id} className={baseClasses}>
             {!isH1 && (
                 <a
                     href={`#${id}`}
-                    className="absolute top-0 -left-8 flex size-8 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+                    className="absolute top-0 -left-8 hidden size-8 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 md:flex"
                     aria-label="Link to this section"
                 >
                     <Hash className="size-4 text-muted-foreground" />
@@ -80,7 +80,7 @@ function Heading({ level, children }: HeadingProps) {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="ml-2 inline-flex size-6 opacity-0 transition-opacity group-hover:opacity-100"
+                    className="ml-2 hidden size-6 opacity-0 transition-opacity group-hover:opacity-100 md:inline-flex"
                     onClick={handleCopyLink}
                     aria-label="Copy link"
                 >
@@ -106,6 +106,7 @@ function PreBlock({ children }: React.ComponentProps<'pre'>) {
         codeElement.props.className
     ) {
         const match = /language-(\w+)/.exec(codeElement.props.className);
+
         if (match) {
             return <CodeBlock {...codeElement.props} />;
         }
@@ -113,7 +114,11 @@ function PreBlock({ children }: React.ComponentProps<'pre'>) {
 
     // Si ce n'est pas un bloc de code avec langage, retourner un <pre> simple
     return (
-        <pre className="overflow-x-auto rounded bg-muted p-4">{children}</pre>
+        <div className="overflow-x-auto rounded bg-muted">
+            <pre data-slot={'pre'} className="p-4">
+                {children}
+            </pre>
+        </div>
     );
 }
 
@@ -121,11 +126,11 @@ function PreBlock({ children }: React.ComponentProps<'pre'>) {
 function CodeBlock({ children, className }: React.ComponentProps<'code'>) {
     const [copied, setCopied] = useState(false);
     const [highlightedCode, setHighlightedCode] = useState('');
+    const [bgColor, setBgColor] = useState('');
     const match = /language-(\w+)/.exec(className || '');
     const rawLanguage = match ? match[1] : '';
     const code = String(children).replace(/\n$/, '');
 
-    // Mapper les alias de langages vers les langages Shiki supportés
     const languageMap: Record<string, string> = {
         env: 'dotenv',
         envrc: 'dotenv',
@@ -142,27 +147,30 @@ function CodeBlock({ children, className }: React.ComponentProps<'code'>) {
     };
 
     useEffect(() => {
-        if (!match || !code) return;
+        if (!match || !code) {
+            return;
+        }
 
         const loadHighlightedCode = async () => {
             try {
                 const { codeToHtml } = await import('shiki');
-                const isDark =
-                    document.documentElement.classList.contains('dark');
+                const isDark = document.documentElement.classList.contains('dark');
+                const theme = isDark ? 'github-dark' : 'github-light';
 
                 const highlighted = await codeToHtml(code, {
                     lang: language,
-                    themes: {
-                        light: 'github-light',
-                        dark: 'github-dark',
-                    },
-                    defaultColor: isDark ? 'dark' : 'light',
+                    theme,
                 });
 
-                // Extraire uniquement le contenu du <code> sans le <pre> wrapper
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(highlighted, 'text/html');
-                const codeElement = doc.querySelector('pre code');
+                const preElement = doc.querySelector('pre');
+                const codeElement = preElement?.querySelector('code');
+
+                if (preElement?.style.backgroundColor) {
+                    setBgColor(preElement.style.backgroundColor);
+                }
+
                 if (codeElement) {
                     setHighlightedCode(codeElement.innerHTML);
                 } else {
@@ -170,14 +178,10 @@ function CodeBlock({ children, className }: React.ComponentProps<'code'>) {
                 }
             } catch (e) {
                 console.error(`Language "${language}" could not be loaded.`, e);
-                // Fallback: afficher le code brut sans coloration
                 setHighlightedCode(
                     code
                         .split('\n')
-                        .map(
-                            (line) =>
-                                `<span class="line">${escapeHtml(line)}</span>`,
-                        )
+                        .map((line) => `<span class="line">${escapeHtml(line)}</span>`)
                         .join('\n'),
                 );
             }
@@ -187,8 +191,8 @@ function CodeBlock({ children, className }: React.ComponentProps<'code'>) {
     }, [code, language, match]);
 
     return (
-        <div className="not-prose group relative my-6">
-            <div className="flex items-center justify-between rounded-t-lg border border-b-0 bg-muted px-4 py-2">
+        <div data-slot={'code-block'} className="not-prose group relative my-4 w-full min-w-0 md:my-6">
+            <div className="flex items-center justify-between rounded-t-lg border border-b-0 bg-muted px-3 py-2 md:px-4">
                 <span className="text-xs font-medium text-muted-foreground">
                     {rawLanguage}
                 </span>
@@ -206,14 +210,19 @@ function CodeBlock({ children, className }: React.ComponentProps<'code'>) {
                     )}
                 </Button>
             </div>
-            <pre className="overflow-x-auto rounded-b-lg border bg-slate-950 p-4 dark:bg-slate-900">
-                <code
-                    className="text-sm"
-                    dangerouslySetInnerHTML={{
-                        __html: highlightedCode || escapeHtml(code),
-                    }}
-                />
-            </pre>
+            <div
+                className="overflow-x-auto rounded-b-lg border"
+                style={{ backgroundColor: bgColor || undefined }}
+            >
+                <pre className="p-3 md:p-4">
+                    <code
+                        className="text-sm"
+                        dangerouslySetInnerHTML={{
+                            __html: highlightedCode || escapeHtml(code),
+                        }}
+                    />
+                </pre>
+            </div>
         </div>
     );
 }
@@ -221,7 +230,10 @@ function CodeBlock({ children, className }: React.ComponentProps<'code'>) {
 // Composant pour le code inline
 function InlineCode({ children }: React.ComponentProps<'code'>) {
     return (
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground">
+        <code
+            data-slot={'inline-code'}
+            className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground"
+        >
             {children}
         </code>
     );
@@ -234,6 +246,7 @@ function LinkComponent({ href, children }: React.ComponentProps<'a'>) {
     if (isAnchor) {
         return (
             <a
+                data-slot={'link-anchor'}
                 href={href}
                 className="font-medium text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:decoration-primary"
             >
@@ -245,6 +258,7 @@ function LinkComponent({ href, children }: React.ComponentProps<'a'>) {
     if (isExternal) {
         return (
             <a
+                data-slot={'link-external'}
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -258,6 +272,7 @@ function LinkComponent({ href, children }: React.ComponentProps<'a'>) {
 
     return (
         <InertiaLink
+            data-slot={'link-inertia'}
             href={href}
             className="font-medium text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:decoration-primary"
         >
@@ -268,7 +283,10 @@ function LinkComponent({ href, children }: React.ComponentProps<'a'>) {
 
 function BlockquoteComponent({ children }: React.ComponentProps<'blockquote'>) {
     return (
-        <blockquote className="my-6 border-l-4 border-primary bg-muted/50 py-2 pr-4 pl-4 italic">
+        <blockquote
+            data-slot={'blockquote'}
+            className="my-6 border-l-4 border-primary bg-muted/50 py-2 pr-4 pl-4 italic"
+        >
             {children}
         </blockquote>
     );
@@ -276,7 +294,7 @@ function BlockquoteComponent({ children }: React.ComponentProps<'blockquote'>) {
 
 function TableComponent({ children }: React.ComponentProps<'table'>) {
     return (
-        <div className="my-6 overflow-x-auto">
+        <div data-slot={'table-content'} className="my-6 overflow-x-auto">
             <table className="w-full border-collapse">{children}</table>
         </div>
     );
@@ -284,11 +302,11 @@ function TableComponent({ children }: React.ComponentProps<'table'>) {
 
 function ImageComponent({ src, alt }: React.ComponentProps<'img'>) {
     return (
-        <span className="my-6 block">
+        <span data-slot={'image'} className="my-6 block">
             <img
                 src={src}
                 alt={alt}
-                className="rounded-lg border shadow-sm"
+                className="max-w-full rounded-lg border shadow-sm"
                 loading="lazy"
             />
         </span>
@@ -296,11 +314,11 @@ function ImageComponent({ src, alt }: React.ComponentProps<'img'>) {
 }
 
 export default function DocumentationMarkdownContent({
-    content,
-    className,
-}: MarkdownContentProps) {
+                                                         content,
+                                                         className,
+                                                     }: MarkdownContentProps) {
     return (
-        <div className={cn('typography', className)}>
+        <div data-slot={'documentation-markdown'} className={cn('typography', className)}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw, rehypeSanitize]}
