@@ -315,6 +315,25 @@ php artisan doc:install
 php artisan doc:install --force
 ```
 
+### Install the AI Assistant Skill
+
+Install the `oilab-laravel-docs` skill so Claude Code knows how to write documentation in this package's format (structure, `meta.json`, frontmatter, markdown, and the regenerate workflow):
+
+```bash
+# Interactive: discover skills from all installed oi-lab packages and choose project or user profile
+php artisan oi:skills
+
+# Install only this skill into the current project (.claude/skills and .junie/skills + project CLAUDE.md)
+php artisan oi:skills oilab-laravel-docs --project
+
+# Install only this skill into the Claude Code user profile (~/.claude/skills + ~/.claude/CLAUDE.md, all projects)
+php artisan oi:skills oilab-laravel-docs --global
+```
+
+The `oi:skills` command is provided by `oi-lab/oi-laravel-development`. The previous `php artisan doc:install-ai-skill` command is the deprecated alias and still works.
+
+See [AI Assistant Skill](docs/advanced/skills.md) for details. The command is safe to re-run.
+
 ## Routes
 
 The package registers these routes (with configurable prefix):

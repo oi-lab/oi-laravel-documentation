@@ -1,0 +1,8 @@
+{
+    "type": "package",
+    "name": "vendor/package-name",
+    "title": "Documentation Title",
+    "description": "Short one-line description of the documentation set",
+    "version": "1.0.0",
+    "order": 50
+}

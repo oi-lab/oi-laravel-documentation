@@ -29,10 +29,32 @@
             "OiLab\\LaravelDocumentation\\Tests\\": "tests/"
         }
     },
+    "scripts": {
+        "test": [
+            "@php vendor/bin/pest"
+        ],
+        "sync-ai-skills": [
+            "@php scripts/sync-ai-skills.php"
+        ],
+        "post-autoload-dump": [
+            "@php scripts/sync-ai-skills.php"
+        ]
+    },
     "extra": {
         "laravel": {
             "providers": [
                 "OiLab\\LaravelDocumentation\\OiLaravelDocumentationServiceProvider"
+            ]
+        },
+        "oi-lab": {
+            "skills": [
+                {
+                    "name": "oilab-laravel-docs",
+                    "description": "Write and organize project documentation pages",
+                    "path": "resources/skills/oilab-laravel-docs",
+                    "rules": "resources/stubs/claude-rules.md",
+                    "section": "oi-lab/oi-laravel-documentation rules"
+                }
             ]
         }
     },

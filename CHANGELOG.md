@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `doc:install-ai-skill` is now deprecated in favor of the unified `php artisan oi:skills` command (provided by `oi-lab/oi-laravel-development`), which discovers and installs the AI assistant skills declared by all installed `oi-lab/*` packages. The legacy command still works and delegates to `oi:skills`. See `docs/advanced/skills.md`.
+
 ### Added
+- New `doc:install-ai-skill` command that installs the bundled `oilab-laravel-docs` AI assistant skill for Claude Code, either into the current project (`.claude/skills`, `.junie/skills`) or the user profile (`~/.claude/skills`), and adds an `oi-lab/oi-laravel-documentation` rules section to the matching `CLAUDE.md`. The skill (shipped in `resources/skills/`) teaches the package's documentation conventions — structure, `meta.json`, frontmatter, markdown, link transformation, and the regenerate workflow. See `docs/advanced/skills.md`.
 - The `doc:install` wizard now detects the project's JavaScript package manager (from the `packageManager` field in `package.json` or the lockfile) and lets you choose between `pnpm`, `npm` and `yarn`. The detected one is preselected. Dependency installs use `pnpm add` / `npm install` / `yarn add`, and ShadCN runs through `pnpm dlx` / `npx` / `yarn dlx`.
 - New `components_path` configuration option (default `resources/js/components/documentation`) to control where the published React components are installed. The wizard rewrites the `@/` imports inside the published files to match a custom path.
 - The wizard now asks how the documentation should be accessible — public, authenticated only (`auth` middleware), or restricted by one or more custom middleware — and writes the choice to `route.middleware` in the published config file.

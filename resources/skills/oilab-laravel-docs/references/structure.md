@@ -1,0 +1,149 @@
+# File Structure & meta.json
+
+How the package discovers, organizes, and orders content. Navigation is built
+entirely from the directory tree + `meta.json` files — there is no manual
+navigation config.
+
+## Table of contents
+- [Directory layout](#directory-layout)
+- [Two authoring modes](#two-authoring-modes)
+- [Root meta.json](#root-metajson)
+- [Section meta.json](#section-metajson)
+- [The _index.md pattern](#the-_indexmd-pattern)
+- [URL derivation](#url-derivation)
+- [Ordering](#ordering)
+- [Naming conventions](#naming-conventions)
+- [Auto-generated files (never edit)](#auto-generated-files-never-edit)
+
+## Directory layout
+
+```
+<docs root>/
+├── meta.json                    # Root metadata (type: package) — required, once
+├── navigation.json              # AUTO-GENERATED — never edit
+├── search-index.json            # AUTO-GENERATED — never edit
+├── getting-started/
+│   ├── meta.json                # Section metadata (type: section) — required
+│   ├── _index.md                # Section homepage
+│   └── installation.md          # A page
+└── guides/
+    ├── meta.json
+    ├── _index.md
+    └── common-tasks/            # Nested subsection — also needs meta.json
+        ├── meta.json
+        ├── _index.md
+        └── working-with-data.md
+```
+
+Nesting can go any depth; **every** folder (section and subsection) needs its
+own `meta.json` or it is skipped with a warning.
+
+## Two authoring modes
+
+The format is identical in both; only the root location and `meta.json` `name`
+differ.
+
+| Mode | Docs root | Purpose |
+|------|-----------|---------|
+| **App docs** | `resources/markdown/docs/` (value of `docs_path` in `config/oi-laravel-documentation.php`) | Documentation served at `/documentation` by the host app. |
+| **Importable package docs** | `<package>/docs/` (e.g. `packages/vendor/name/docs/`) | Docs shipped inside a Composer package, imported into a host app via `php artisan doc:import`. The package's `docs/meta.json` `name` becomes the import slug. |
+
+When writing docs for a package that should be importable, place them in the
+package's own `docs/` folder with a root `meta.json` of `type: "package"`. The
+host app runs `doc:import` to copy them into its own `docs_path`.
+
+## Root meta.json
+
+Located at `<docs root>/meta.json`. Defines the whole documentation set. Not
+shown in navigation.
+
+```json
+{
+    "type": "package",
+    "name": "vendor/package-name",
+    "title": "Documentation Title",
+    "description": "Short one-line description",
+    "version": "1.0.0",
+    "order": 50
+}
+```
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| `type` | string | Yes | Always `"package"` |
+| `name` | string | Yes | Identifier in `vendor/package` format. Determines the import slug for `doc:import`. |
+| `title` | string | Yes | Display name |
+| `description` | string | Yes | Short summary |
+| `version` | string | No | Documentation version |
+| `order` | number | No | Sort position when imported alongside other package docs |
+
+## Section meta.json
+
+Located in every section/subsection folder. Without it the folder is skipped.
+
+```json
+{
+    "type": "section",
+    "title": "Getting Started",
+    "description": "Installation and setup guide",
+    "order": 1
+}
+```
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| `type` | string | Yes | Always `"section"` |
+| `title` | string | Yes | Section name shown in navigation |
+| `description` | string | No | Shown in navigation / listings |
+| `order` | number | No | Sort order (default `999`) |
+
+## The _index.md pattern
+
+`_index.md` is a section's homepage. Visiting the section URL renders it.
+
+```
+getting-started/
+├── meta.json
+├── _index.md          # → /documentation/getting-started
+└── installation.md    # → /documentation/getting-started/installation
+```
+
+Always give a section an `_index.md`. A section without one has no landing page.
+
+## URL derivation
+
+URLs follow folder nesting, prefixed by the route prefix (`documentation` by
+default):
+
+- `getting-started/_index.md` → `/documentation/getting-started`
+- `getting-started/installation.md` → `/documentation/getting-started/installation`
+- `guides/common-tasks/_index.md` → `/documentation/guides/common-tasks`
+
+Slugs come from folder/file names, so naming = URL.
+
+## Ordering
+
+Pages and sections sort by, in priority:
+1. Explicit `order` (lower first) — in `meta.json` for sections, frontmatter for pages
+2. Numeric filename prefix (e.g. `01-intro.md` → order 1)
+3. Alphabetical by title
+
+Default `order` is `999`. Use gaps (10, 20, 30) to leave room for inserts.
+
+## Naming conventions
+
+Lowercase, hyphen-separated, descriptive:
+
+```
+✓ getting-started.md      ✗ GettingStarted.md
+✓ api-reference/          ✗ Api_Reference/
+✓ installation-steps.md   ✗ config/          (too ambiguous)
+```
+
+Capital letters leak into URLs (`/documentation/GettingStarted`).
+
+## Auto-generated files (never edit)
+
+`navigation.json` and `search-index.json` are regenerated by `doc:gen-nav` and
+`doc:gen-index`. Manual edits are overwritten. Control structure through folder
+layout, `meta.json`, and frontmatter instead.
