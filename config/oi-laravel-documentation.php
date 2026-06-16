@@ -48,6 +48,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Merge Output Directory
+    |--------------------------------------------------------------------------
+    |
+    | The directory where `doc:merge` writes the single merged markdown file.
+    | This is relative to the base_path() of your Laravel application and
+    | defaults to the private storage disk so the file is not web-accessible.
+    | The filename is derived from the project name (e.g. "my-package.md").
+    |
+    */
+    'merge_output_directory' => 'storage/app/private/docs',
+
+    /*
+    |--------------------------------------------------------------------------
     | Route Configuration
     |--------------------------------------------------------------------------
     |

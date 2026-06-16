@@ -9,6 +9,8 @@ use OiLab\LaravelDocumentation\Console\Commands\GenDocNav;
 use OiLab\LaravelDocumentation\Console\Commands\ImportPackageDocs;
 use OiLab\LaravelDocumentation\Console\Commands\InstallAiSkill;
 use OiLab\LaravelDocumentation\Console\Commands\InstallDocumentation;
+use OiLab\LaravelDocumentation\Console\Commands\MergeDocs;
+use OiLab\LaravelDocumentation\Services\DocumentationMergeService;
 use OiLab\LaravelDocumentation\Services\DocumentationService;
 
 class OiLaravelDocumentationServiceProvider extends ServiceProvider
@@ -22,6 +24,10 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
 
         $this->app->singleton(DocumentationService::class, function ($app) {
             return new DocumentationService;
+        });
+
+        $this->app->singleton(DocumentationMergeService::class, function ($app) {
+            return new DocumentationMergeService($app->make(DocumentationService::class));
         });
     }
 
@@ -47,6 +53,7 @@ class OiLaravelDocumentationServiceProvider extends ServiceProvider
                 AddDocPage::class,
                 ImportPackageDocs::class,
                 InstallAiSkill::class,
+                MergeDocs::class,
             ]);
         }
 
