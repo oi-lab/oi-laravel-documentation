@@ -172,6 +172,81 @@ echo $config['docs_path'];  // Highlighted
 ```
 ````
 
+## Diagrams (Mermaid)
+
+Diagrams are authored **exclusively** with [Mermaid](https://mermaid.js.org) in a fenced code block tagged `mermaid`. Do not use ASCII art, screenshots, or images for diagrams — only `mermaid` blocks are turned into live, theme-aware SVG diagrams.
+
+````markdown
+```mermaid
+flowchart LR
+    A[Markdown file] --> B[doc:gen-nav]
+    B --> C[navigation.json]
+    A --> D[doc:gen-index]
+    D --> E[search-index.json]
+```
+````
+
+Result:
+
+```mermaid
+flowchart LR
+    A[Markdown file] --> B[doc:gen-nav]
+    B --> C[navigation.json]
+    A --> D[doc:gen-index]
+    D --> E[search-index.json]
+```
+
+The diagram is rendered to SVG and automatically follows the site's light/dark theme. Any other code block language falls through to syntax highlighting and renders as text, not a diagram.
+
+### Supported Diagram Types
+
+Mermaid supports many diagram types, including:
+
+- `flowchart` / `graph` — flow and process diagrams
+- `sequenceDiagram` — interactions over time
+- `classDiagram` — class relationships
+- `stateDiagram-v2` — state machines
+- `erDiagram` — entity-relationship diagrams
+- `gantt` — project timelines
+- `journey` — user journeys
+- `pie` — pie charts
+
+### Sequence Diagram Example
+
+````markdown
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as App
+    participant DB as Database
+    U->>A: Request page
+    A->>DB: Query content
+    DB-->>A: Rows
+    A-->>U: Rendered HTML
+```
+````
+
+Result:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as App
+    participant DB as Database
+    U->>A: Request page
+    A->>DB: Query content
+    DB-->>A: Rows
+    A-->>U: Rendered HTML
+```
+
+### Authoring Tips
+
+- Keep node labels short; wrap text containing spaces or special characters in quotes: `A["Long label"]`.
+- Escape reserved characters (`;`, `#`) inside labels instead of leaving them bare.
+- Diagrams render with `securityLevel: 'strict'` — raw HTML in labels is stripped, so use Mermaid's own styling directives.
+- If a diagram fails to parse, it renders an inline error showing the source; keep each block self-contained and valid.
+- Prefer several small diagrams over one dense graph — they read better, especially on mobile.
+
 ## Links
 
 ### External Links
@@ -444,10 +519,11 @@ This is a note[^1].
 2. **One h1 per page** - Your page title is the h1
 3. **Use descriptive link text** - `[read more](link)` is bad, `[installation guide](link)` is good
 4. **Format code properly** - Always specify language in code blocks
-5. **Use tables sparingly** - They're hard to read on mobile
-6. **Keep line length reasonable** - 80-100 characters is typical
-7. **Use blank lines** - Separate blocks with blank lines for readability
-8. **Escape special characters** - Use backslash when needed
+5. **Draw diagrams with Mermaid** - Use `mermaid` blocks for every diagram; never ASCII art or images
+6. **Use tables sparingly** - They're hard to read on mobile
+7. **Keep line length reasonable** - 80-100 characters is typical
+8. **Use blank lines** - Separate blocks with blank lines for readability
+9. **Escape special characters** - Use backslash when needed
 
 ## Examples
 

@@ -1,13 +1,18 @@
 import { Link as InertiaLink } from '@inertiajs/react';
-import { Check, Copy, ExternalLink, Hash } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Check, Copy, ExternalLink, Hash, icons, Info, TriangleAlert } from 'lucide-react';
+import React, { useEffect, useId, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import slugify from 'slugify';
 
 import { Button } from '@/components/ui/button';
+import remarkCallouts, {
+    type CalloutType,
+    normalizeCallouts,
+} from '@/lib/remark-callouts';
+import remarkTableColumn from '@/lib/remark-table-column';
 import { cn } from '@/lib/utils';
 
 // Helper pour échapper le HTML
@@ -108,6 +113,12 @@ function PreBlock({ children }: React.ComponentProps<'pre'>) {
         const match = /language-(\w+)/.exec(codeElement.props.className);
 
         if (match) {
+            if (match[1] === 'mermaid') {
+                const code = String(codeElement.props.children).replace(/\n$/, '');
+
+                return <MermaidDiagram code={code} />;
+            }
+
             return <CodeBlock {...codeElement.props} />;
         }
     }
@@ -227,6 +238,91 @@ function CodeBlock({ children, className }: React.ComponentProps<'code'>) {
     );
 }
 
+// Composant pour rendre les diagrammes Mermaid
+function MermaidDiagram({ code }: { code: string }) {
+    const reactId = useId();
+    const diagramId = `mermaid-${reactId.replace(/[^a-zA-Z0-9]/g, '')}`;
+    const [svg, setSvg] = useState('');
+    const [hasError, setHasError] = useState(false);
+    const [isDark, setIsDark] = useState(
+        () =>
+            typeof document !== 'undefined' &&
+            document.documentElement.classList.contains('dark'),
+    );
+
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setIsDark(document.documentElement.classList.contains('dark'));
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const renderDiagram = async () => {
+            try {
+                const mermaid = (await import('mermaid')).default;
+
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: isDark ? 'dark' : 'default',
+                    securityLevel: 'strict',
+                    fontFamily: 'inherit',
+                });
+
+                const { svg: renderedSvg } = await mermaid.render(diagramId, code);
+
+                if (!cancelled) {
+                    setSvg(renderedSvg);
+                    setHasError(false);
+                }
+            } catch (e) {
+                if (!cancelled) {
+                    console.error('Mermaid diagram could not be rendered.', e);
+                    setHasError(true);
+                }
+            }
+        };
+
+        renderDiagram();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [code, diagramId, isDark]);
+
+    if (hasError) {
+        return (
+            <div
+                data-slot={'mermaid-error'}
+                className="my-4 overflow-x-auto rounded-lg border border-destructive/50 bg-destructive/10 p-4 md:my-6"
+            >
+                <p className="mb-2 text-sm font-medium text-destructive">
+                    Diagram could not be rendered
+                </p>
+                <pre className="text-sm">
+                    <code>{code}</code>
+                </pre>
+            </div>
+        );
+    }
+
+    return (
+        <div
+            data-slot={'mermaid-diagram'}
+            className="not-prose my-4 flex justify-center overflow-x-auto rounded-lg border bg-muted/30 p-4 md:my-6"
+            dangerouslySetInnerHTML={{ __html: svg }}
+        />
+    );
+}
+
 // Composant pour le code inline
 function InlineCode({ children }: React.ComponentProps<'code'>) {
     return (
@@ -281,24 +377,91 @@ function LinkComponent({ href, children }: React.ComponentProps<'a'>) {
     );
 }
 
-function BlockquoteComponent({ children }: React.ComponentProps<'blockquote'>) {
+
+const CALLOUT_VARIANTS: Record<
+    Exclude<CalloutType, 'quote'>,
+    { icon: typeof Info; container: string; iconWrapper: string }
+> = {
+    info: {
+        icon: Info,
+        container: 'border-sky-500 bg-sky-500',
+        iconWrapper: 'text-background',
+    },
+    danger: {
+        icon: TriangleAlert,
+        container: 'border-red-500 bg-red-500',
+        iconWrapper: 'text-background',
+    },
+};
+
+const calloutContentClasses =
+    'p-4 [&_p]:mt-0! [&_p]:mb-2! [&_p]:last:mb-0! [&_ul]:mt-0! [&_ul]:mb-2! [&_ul]:last:mb-0!';
+
+function BlockquoteComponent({
+                                 node,
+                                 children,
+                             }: React.ComponentProps<'blockquote'> & {
+    node?: { properties?: Record<string, unknown> };
+}) {
+    const rawType = node?.properties?.dataCallout;
+    const type: CalloutType =
+        rawType === 'info' || rawType === 'danger' ? rawType : 'quote';
+
+    // Classic citation: plain accent rule, no icon.
+    if (type === 'quote') {
+        return (
+            <blockquote
+                data-slot={'blockquote'}
+                data-callout={'quote'}
+                className="border-border text-muted-foreground my-6 border-l-4 pl-4 italic [&_p]:my-2 [&_p]:first:mt-0 [&_p]:last:mb-0"
+            >
+                {children}
+            </blockquote>
+        );
+    }
+
+    const variant = CALLOUT_VARIANTS[type];
+    const Icon = variant.icon;
+
     return (
         <blockquote
-            data-slot={'blockquote'}
-            className="my-6 border-l-4 border-primary bg-muted/50 py-2 pr-4 pl-4 italic"
+            data-slot={'callout'}
+            data-callout={type}
+            className={cn(
+                'my-6 grid grid-cols-[2.5rem_1fr] items-stretch overflow-hidden rounded-lg border-2 not-italic',
+                variant.container,
+            )}
         >
-            {children}
+            <div
+                className={cn(
+                    'flex items-start justify-center pt-4',
+                    variant.iconWrapper,
+                )}
+            >
+                <Icon className={'size-5'} />
+            </div>
+            <div
+                className={cn(
+                    'bg-background rounded-l-md',
+                    calloutContentClasses,
+                )}
+            >
+                {children}
+            </div>
         </blockquote>
     );
 }
 
 function TableComponent({ children }: React.ComponentProps<'table'>) {
     return (
-        <div data-slot={'table-content'} className="my-6 overflow-x-auto">
-            <table className="w-full border-collapse">{children}</table>
+        <div className="my-6 overflow-x-auto">
+            <table className="[&_td]:border-muted [&_th]:border-muted [&_th]:text-muted-foreground w-full border-collapse [&_td]:border-b [&_td]:py-1.5 [&_td]:text-sm [&_th]:border-b [&_th]:py-1.5 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium">
+                {children}
+            </table>
         </div>
     );
 }
+
 
 function ImageComponent({ src, alt }: React.ComponentProps<'img'>) {
     return (
@@ -313,6 +476,65 @@ function ImageComponent({ src, alt }: React.ComponentProps<'img'>) {
     );
 }
 
+type IconName = keyof typeof icons;
+
+interface IconComponentProps {
+    name?: string;
+    className?: string | string[];
+}
+
+function IconComponent({ name, className }: IconComponentProps) {
+    if (!name) {
+        return null;
+    }
+
+    // rehype-sanitize prefixes `name` attribute values with `user-content-`
+    // to prevent DOM clobbering. Strip it to recover the original icon key.
+    const iconName = name.replace(/^user-content-/, '') as IconName;
+    const LucideIcon = icons[iconName];
+
+    if (!LucideIcon) {
+        console.warn(`<Icon name="${iconName}" /> not found in lucide-react`);
+
+        return null;
+    }
+
+    const resolvedClassName = Array.isArray(className)
+        ? className.join(' ')
+        : className;
+
+    return (
+        <span
+            className={
+                '-mb-1 inline-flex size-6 items-center justify-center rounded-sm border align-text-bottom'
+            }
+        >
+            <LucideIcon
+                className={cn('inline-block size-4', resolvedClassName)}
+            />
+        </span>
+    );
+}
+
+const sanitizeSchema = {
+    ...defaultSchema,
+    tagNames: [...(defaultSchema.tagNames ?? []), 'icon'],
+    attributes: {
+        ...defaultSchema.attributes,
+        icon: ['name', 'className'],
+        // Surface the callout type `remarkCallouts` emits as `data-callout`,
+        // which `defaultSchema` would otherwise strip from the blockquote.
+        blockquote: [
+            ...(defaultSchema.attributes?.blockquote ?? []),
+            'dataCallout',
+        ],
+        // Preserve the inline width `remarkTableColumn` emits on table cells,
+        // which `defaultSchema` would otherwise strip along with all `style`.
+        th: [...(defaultSchema.attributes?.th ?? []), 'style'],
+        td: [...(defaultSchema.attributes?.td ?? []), 'style'],
+    },
+};
+
 export default function DocumentationMarkdownContent({
                                                          content,
                                                          className,
@@ -320,8 +542,8 @@ export default function DocumentationMarkdownContent({
     return (
         <div data-slot={'documentation-markdown'} className={cn('typography', className)}>
             <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                remarkPlugins={[remarkGfm, remarkCallouts, remarkTableColumn]}
+                rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
                 components={{
                     h1: ({ children }) => (
                         <Heading level={1}>{children}</Heading>
@@ -358,9 +580,10 @@ export default function DocumentationMarkdownContent({
                     ),
                     p: ({ children }) => <p className="my-4">{children}</p>,
                     hr: () => <hr className="my-8" />,
+                    icon: IconComponent
                 }}
             >
-                {content}
+                {normalizeCallouts(content)}
             </ReactMarkdown>
         </div>
     );

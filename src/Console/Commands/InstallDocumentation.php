@@ -24,6 +24,7 @@ class InstallDocumentation extends Command
         'rehype-sanitize' => '^6.0.0',
         'slugify' => '^1.6.6',
         'shiki' => '^1.0.0',
+        'mermaid' => '^11.0.0',
         'lucide-react' => '^0.460.0',
         'usehooks-ts' => '^3.1.1',
         'class-variance-authority' => '^0.7.0',
@@ -150,11 +151,13 @@ class InstallDocumentation extends Command
         $headingPath = base_path($this->componentsPath().'/documentation-heading.tsx');
         $layoutPath = resource_path('js/layouts/documentation-layout.tsx');
         $indexPage = resource_path('js/pages/documentation/index.tsx');
+        $remarkPlugin = resource_path('js/lib/remark-callouts.ts');
 
         return File::exists($componentsPath)
             && File::exists($headingPath)
             && File::exists($layoutPath)
-            && File::exists($indexPage);
+            && File::exists($indexPage)
+            && File::exists($remarkPlugin);
     }
 
     private function componentsPath(): string
@@ -371,6 +374,15 @@ class InstallDocumentation extends Command
                     'documentation-header.tsx',
                     'documentation-footer.tsx',
                     'sign.tsx',
+                ],
+            ],
+            [
+                'source' => "{$stubsRoot}/lib",
+                'target' => resource_path('js/lib'),
+                'label' => 'resources/js/lib',
+                'files' => [
+                    'remark-callouts.ts',
+                    'remark-table-column.ts',
                 ],
             ],
             [

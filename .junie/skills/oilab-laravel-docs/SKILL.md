@@ -70,6 +70,9 @@ Content here. Link internally with relative `.md` paths: [intro](./_index.md).
   automatic relative-`.md` link transformation. Search scores titles/headings
   higher than body — write descriptive titles and headings. Details →
   **references/markdown.md**.
+- **Diagrams**: author **exclusively** with Mermaid in a ` ```mermaid ` fenced
+  block — no ASCII art, diagram images, or other syntax. Rendered to SVG with
+  automatic light/dark theming. See **references/markdown.md**.
 
 Templates to copy in `assets/`: `page-template.md`, `section-meta.json`,
 `root-meta.json`.
@@ -119,3 +122,5 @@ need rebuilding (`npm run build` / `npm run dev`) — ask before assuming.
 - Capitalized or underscored folder/file names (leak into URLs).
 - Forgetting to regenerate after changes (app mode).
 - Internal links without the `./` prefix or `.md` extension (not transformed).
+- Drawing diagrams as ASCII art or images instead of a `mermaid` block (only
+  `mermaid` blocks render as diagrams).
