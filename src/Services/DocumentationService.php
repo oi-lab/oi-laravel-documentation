@@ -5,10 +5,13 @@ namespace OiLab\LaravelDocumentation\Services;
 use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 use Symfony\Component\Yaml\Yaml;
 
 class DocumentationService
 {
+    private ?GithubFlavoredMarkdownConverter $markdownConverter = null;
+
     private function getDocsPath(): string
     {
         return base_path(config('oi-laravel-documentation.docs_path', 'resources/markdown/docs'));
@@ -80,11 +83,35 @@ class DocumentationService
         $markdown = $this->transformMarkdownLinks($markdown, $filePath);
         $tableOfContents = $this->extractTableOfContents($markdown);
 
-        return [
+        $document = [
             'frontmatter' => $frontmatter,
             'markdown' => $markdown,
             'tableOfContents' => $tableOfContents,
         ];
+
+        if (config('oi-laravel-documentation.rendering.markdown_engine', 'client') === 'server') {
+            $document['html'] = $this->convertMarkdownToHtml($markdown);
+        }
+
+        return $document;
+    }
+
+    /**
+     * Convert markdown to HTML for the "server" rendering engine.
+     *
+     * Documentation content is authored by the application's own developers
+     * (not user input), so raw HTML embedded in the markdown (e.g. `<icon>`
+     * tags) is passed through unescaped, mirroring the client-side renderer's
+     * `rehype-raw` behavior.
+     */
+    private function convertMarkdownToHtml(string $markdown): string
+    {
+        $this->markdownConverter ??= new GithubFlavoredMarkdownConverter([
+            'html_input' => 'allow',
+            'allow_unsafe_links' => false,
+        ]);
+
+        return (string) $this->markdownConverter->convert($markdown);
     }
 
     public function extractFrontmatter(string $content): ?array

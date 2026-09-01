@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import slugify from 'slugify';
 
 import { Button } from '@/components/ui/button';
+import { DOCUMENTATION_TYPOGRAPHY_CLASS } from '@/lib/documentation-typography';
 import remarkCallouts, {
     type CalloutType,
     normalizeCallouts,
@@ -540,7 +541,7 @@ export default function DocumentationMarkdownContent({
                                                          className,
                                                      }: MarkdownContentProps) {
     return (
-        <div data-slot={'documentation-markdown'} className={cn('typography', className)}>
+        <div data-slot={'documentation-markdown'} className={cn(DOCUMENTATION_TYPOGRAPHY_CLASS, className)}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkCallouts, remarkTableColumn]}
                 rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}

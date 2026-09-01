@@ -86,4 +86,30 @@ return [
         'excerpt_length' => 150,
         'excerpt_context' => 50,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rendering Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configured during installation.
+    |
+    | - "markdown_engine": "client" renders markdown to React with
+    |   ReactMarkdown, giving you syntax highlighting, Mermaid diagrams and
+    |   copy buttons. "server" converts markdown to HTML in Laravel (via
+    |   league/commonmark) and renders it with DocumentationHtmlContent
+    |   instead of DocumentationMarkdownContent — simpler and SSR-friendly,
+    |   but without the client-only interactive features.
+    | - "ssr": whether the host application renders the Inertia app with
+    |   server-side rendering (resources/js/ssr.tsx).
+    | - "typeset": apply Shadcn UI's "typeset" typography class to the
+    |   rendered content container instead of "typography". Requires
+    |   resources/css/typeset.css to exist.
+    |
+    */
+    'rendering' => [
+        'markdown_engine' => 'client',
+        'ssr' => false,
+        'typeset' => false,
+    ],
 ];

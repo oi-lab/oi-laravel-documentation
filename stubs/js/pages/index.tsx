@@ -1,7 +1,7 @@
 import DocumentationNavigation from '@/components/documentation/documentation-navigation';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import DocumentationLayout from '@/layouts/documentation-layout';
+import dashboard from '@/routes/dashboard';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, Book, Code, Shield } from 'lucide-react';
 
@@ -46,10 +46,10 @@ export default function Index({ navigation }: IndexProps) {
     const quickStartItems = getQuickStartItems();
 
     return (
-        <DocumentationLayout>
+        <>
             <Head title="Documentation" />
 
-            <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
+            <div className="grid gap-8 lg:grid-cols-[--spacing(64)_1fr]">
                 {/* Navigation Sidebar */}
                 <aside>
                     <DocumentationNavigation
@@ -174,6 +174,19 @@ export default function Index({ navigation }: IndexProps) {
                     </div>
                 </div>
             </div>
-        </DocumentationLayout>
+        </>
     );
 }
+
+Index.layout = {
+    breadcrumbs: [
+        {
+            title: 'Home',
+            href: dashboard.board(),
+        },
+        {
+            title: 'Documentation',
+            href: '#',
+        },
+    ],
+};

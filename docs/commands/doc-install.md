@@ -73,6 +73,23 @@ Select middleware [web]:
 web, auth, verified
 ```
 
+### Step 2b: Rendering Options
+
+Prompts you to choose how markdown is rendered and whether to opt into SSR and Shadcn's typography class:
+
+```
+Where should markdown be converted to HTML?
+
+  [1] Client-side - convert markdown to React with ReactMarkdown (syntax highlighting, Mermaid diagrams, copy buttons)
+  [2] Server-side - convert markdown to HTML in Laravel and render it as-is (simpler, SSR-friendly, fewer interactive features)
+
+Does your application render the Inertia app with SSR (resources/js/ssr.tsx)? (yes/no)
+
+Apply Shadcn UI's "typeset" typography class to the documentation content? (yes/no)
+```
+
+These choices are saved to `rendering.markdown_engine`, `rendering.ssr`, and `rendering.typeset` in the config file (see [Configuration](../configuration/configuration.md)). The React components step (below) always publishes both `DocumentationMarkdownContent` and `DocumentationHtmlContent` — `show.tsx` switches between them at runtime based on `rendering.markdown_engine` — and sets the shared `DOCUMENTATION_TYPOGRAPHY_CLASS` constant (`resources/js/lib/documentation-typography.ts`) to `typography` or `typeset` to match your answer.
+
 ### Step 3: Publish Routes
 
 Publishes route definitions:
@@ -109,10 +126,10 @@ Publishing React components...
 ```
 
 Components include:
-- `DocumentationLayout.tsx` - Main layout wrapper
+- `DocumentationLayout.tsx` - Optional standalone page shell (header/footer)
 - `DocumentationNavigation.tsx` - Sidebar navigation
 - `DocumentationSearch.tsx` - Search interface
-- `DocumentationMarkdownContent.tsx` - Markdown renderer
+- `DocumentationMarkdownContent.tsx` and `DocumentationHtmlContent.tsx` - Content renderers; `show.tsx` picks one at runtime based on `rendering.markdown_engine`
 - And more...
 
 All components are fully customizable since they're in your project.

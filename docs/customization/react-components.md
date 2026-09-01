@@ -148,6 +148,25 @@ export function DocumentationMarkdownContent({
 - Link formatting
 - Image rendering
 
+#### DocumentationHtmlContent.tsx
+
+Always published alongside `DocumentationMarkdownContent.tsx`. `show.tsx` renders it instead whenever `document.html` is present — i.e. when `rendering.markdown_engine` is set to `server` and `DocumentationService` converted the markdown to HTML in Laravel (via `league/commonmark`). It intercepts clicks on internal links to keep SPA navigation working:
+
+```typescript
+interface DocumentationHtmlContentProps {
+  html: string;
+  className?: string;
+}
+
+export function DocumentationHtmlContent({ html, className }: DocumentationHtmlContentProps) {
+  return (
+    <div className={DOCUMENTATION_TYPOGRAPHY_CLASS} dangerouslySetInnerHTML={{ __html: html }} />
+  );
+}
+```
+
+It trades the client-only interactive features (syntax highlighting, Mermaid diagrams, per-heading copy links) for simpler, SSR-friendly output. Like `DocumentationMarkdownContent`, it imports its container class from the shared `DOCUMENTATION_TYPOGRAPHY_CLASS` constant (`resources/js/lib/documentation-typography.ts`) — see [`rendering.typeset`](../configuration/configuration.md#renderingtypeset).
+
 #### DocumentationTableOfContents.tsx
 
 Displays page headings:

@@ -93,6 +93,31 @@ return [
          */
         'excerpt_context' => 50,
     ],
+
+    /**
+     * Rendering configuration, set during installation.
+     */
+    'rendering' => [
+        /**
+         * "client" renders markdown to React with ReactMarkdown (syntax
+         * highlighting, Mermaid diagrams, copy buttons). "server" converts
+         * markdown to HTML in Laravel and renders it with
+         * DocumentationHtmlContent instead of DocumentationMarkdownContent.
+         */
+        'markdown_engine' => 'client',
+
+        /**
+         * Whether the host application renders the Inertia app with SSR.
+         */
+        'ssr' => false,
+
+        /**
+         * Apply Shadcn UI's "typeset" typography class to the rendered
+         * content container instead of "typography". Requires
+         * resources/css/typeset.css to exist.
+         */
+        'typeset' => false,
+    ],
 ];
 ```
 
@@ -188,6 +213,34 @@ Number of characters before and after the matched term in excerpts.
 **Default:** `50`
 
 **Example:** With `excerpt_context: 50`, a match of "search" might show 50 characters before and 50 after the word.
+
+### rendering.markdown_engine
+
+Where markdown is converted to HTML.
+
+**Default:** `client`
+
+**Options:**
+- `client` (default) — `DocumentationService` only returns `markdown`. `show.tsx` renders it in the browser via `DocumentationMarkdownContent` (ReactMarkdown), giving you syntax highlighting, Mermaid diagrams, and copy buttons.
+- `server` — `DocumentationService` also converts the markdown to HTML (via `league/commonmark`) and returns it as `html`. `show.tsx` detects the `html` field and renders it with `DocumentationHtmlContent` instead. Simpler and SSR-friendly, but without the client-only interactive features.
+
+Both `DocumentationMarkdownContent` and `DocumentationHtmlContent` are always published — `show.tsx` switches between them at runtime based on whether `document.html` is present, so this setting is purely a backend toggle and can be changed at any time without re-running `doc:install`.
+
+### rendering.ssr
+
+Whether the host application renders the Inertia app with SSR (`resources/js/ssr.tsx`).
+
+**Default:** `false`
+
+This is informational: the installer checks for `resources/js/ssr.tsx` when you answer "yes" and warns if it's missing.
+
+### rendering.typeset
+
+Applies Shadcn UI's `typeset` typography class to the content container instead of `typography`.
+
+**Default:** `false`
+
+The class is centralized in a single `DOCUMENTATION_TYPOGRAPHY_CLASS` constant published to `resources/js/lib/documentation-typography.ts`, which both `DocumentationMarkdownContent` and `DocumentationHtmlContent` import. `doc:install` sets its value based on your answer, and warns if `resources/css/typeset.css` doesn't exist when you opt in. To change it later, edit that constant directly (or re-run `doc:install --force`).
 
 ## Changing Configuration
 

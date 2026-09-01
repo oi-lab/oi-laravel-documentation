@@ -91,6 +91,7 @@ class InstallDocumentation extends Command
         if (isset($selectedSteps['config'])) {
             $this->publishConfig($force);
             $this->configureRouteAccess();
+            $this->configureRenderingOptions();
         }
 
         if (isset($selectedSteps['routes'])) {
@@ -148,16 +149,20 @@ class InstallDocumentation extends Command
     private function areComponentsInstalled(): bool
     {
         $componentsPath = base_path($this->componentsPath().'/documentation-markdown-content.tsx');
+        $htmlContentPath = base_path($this->componentsPath().'/documentation-html-content.tsx');
         $headingPath = base_path($this->componentsPath().'/documentation-heading.tsx');
         $layoutPath = resource_path('js/layouts/documentation-layout.tsx');
         $indexPage = resource_path('js/pages/documentation/index.tsx');
         $remarkPlugin = resource_path('js/lib/remark-callouts.ts');
+        $typographyLib = resource_path('js/lib/documentation-typography.ts');
 
         return File::exists($componentsPath)
+            && File::exists($htmlContentPath)
             && File::exists($headingPath)
             && File::exists($layoutPath)
             && File::exists($indexPage)
-            && File::exists($remarkPlugin);
+            && File::exists($remarkPlugin)
+            && File::exists($typographyLib);
     }
 
     private function componentsPath(): string
@@ -178,7 +183,10 @@ class InstallDocumentation extends Command
         return $path;
     }
 
-    private function writeStubFile(string $sourcePath, string $targetPath): void
+    /**
+     * @param  array<string, string>  $replacements  Extra literal str_replace pairs applied after the alias rewrite.
+     */
+    private function writeStubFile(string $sourcePath, string $targetPath, array $replacements = []): void
     {
         $contents = File::get($sourcePath);
 
@@ -192,7 +200,26 @@ class InstallDocumentation extends Command
             );
         }
 
+        if (! empty($replacements)) {
+            $contents = str_replace(array_keys($replacements), array_values($replacements), $contents);
+        }
+
         File::put($targetPath, $contents);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function typographyClassReplacements(): array
+    {
+        if (! config('oi-laravel-documentation.rendering.typeset', false)) {
+            return [];
+        }
+
+        return [
+            "export const DOCUMENTATION_TYPOGRAPHY_CLASS = 'typography';"
+                => "export const DOCUMENTATION_TYPOGRAPHY_CLASS = 'typeset';",
+        ];
     }
 
     private function publishConfig(bool $force): void
@@ -278,6 +305,68 @@ class InstallDocumentation extends Command
 
         $this->warn('⚠ Could not update the route middleware automatically.');
         $this->line("  Set 'route.middleware' to [".implode(', ', $middleware)."] in config/oi-laravel-documentation.php manually.");
+    }
+
+    private function configureRenderingOptions(): void
+    {
+        $configPath = config_path('oi-laravel-documentation.php');
+
+        if (! File::exists($configPath)) {
+            return;
+        }
+
+        $this->newLine();
+
+        $client = 'Client-side - convert markdown to React with ReactMarkdown (syntax highlighting, Mermaid diagrams, copy buttons)';
+        $server = 'Server-side - convert markdown to HTML in Laravel and render it as-is (simpler, SSR-friendly, fewer interactive features)';
+
+        $engineChoice = $this->choice(
+            'Where should markdown be converted to HTML?',
+            [$client, $server],
+            $client
+        );
+
+        $engine = $engineChoice === $server ? 'server' : 'client';
+
+        $this->updateConfigValue($configPath, 'markdown_engine', "'markdown_engine' => '{$engine}',");
+        $this->info("✓ Markdown rendering engine set to: {$engine}");
+
+        $ssr = $this->confirm('Does your application render the Inertia app with SSR (resources/js/ssr.tsx)?', false);
+        $this->updateConfigValue($configPath, 'ssr', "'ssr' => ".($ssr ? 'true' : 'false').',');
+
+        if ($ssr && ! File::exists(resource_path('js/ssr.tsx'))) {
+            $this->warn('⚠ resources/js/ssr.tsx was not found. Set up Inertia SSR before relying on it.');
+        }
+
+        $typeset = $this->confirm("Apply Shadcn UI's \"typeset\" typography class to the documentation content?", false);
+        $this->updateConfigValue($configPath, 'typeset', "'typeset' => ".($typeset ? 'true' : 'false').',');
+
+        if ($typeset && ! File::exists(resource_path('css/typeset.css'))) {
+            $this->warn('⚠ resources/css/typeset.css was not found.');
+            $this->line('  Add it (e.g. via the Shadcn UI typography component) so the "typeset" class resolves to styles.');
+        }
+    }
+
+    private function updateConfigValue(string $configPath, string $key, string $replacement): void
+    {
+        $contents = File::get($configPath);
+
+        $updated = preg_replace(
+            "/'".preg_quote($key, '/')."'\s*=>\s*(?:'[^']*'|true|false),/",
+            $replacement,
+            $contents,
+            1,
+            $count
+        );
+
+        if ($count > 0 && $updated !== null) {
+            File::put($configPath, $updated);
+
+            return;
+        }
+
+        $this->warn("⚠ Could not update '{$key}' automatically.");
+        $this->line('  Set it manually in config/oi-laravel-documentation.php.');
     }
 
     private function publishRoutes(bool $force): void
@@ -367,6 +456,7 @@ class InstallDocumentation extends Command
                 'label' => $componentsPath,
                 'files' => [
                     'documentation-markdown-content.tsx',
+                    'documentation-html-content.tsx',
                     'documentation-navigation.tsx',
                     'documentation-search.tsx',
                     'documentation-toc.tsx',
@@ -381,8 +471,12 @@ class InstallDocumentation extends Command
                 'target' => resource_path('js/lib'),
                 'label' => 'resources/js/lib',
                 'files' => [
+                    'documentation-typography.ts',
                     'remark-callouts.ts',
                     'remark-table-column.ts',
+                ],
+                'replacements' => [
+                    'documentation-typography.ts' => $this->typographyClassReplacements(),
                 ],
             ],
             [
@@ -418,17 +512,18 @@ class InstallDocumentation extends Command
             foreach ($group['files'] as $file) {
                 $sourcePath = "{$group['source']}/{$file}";
                 $targetPath = "{$group['target']}/{$file}";
+                $fileReplacements = $group['replacements'][$file] ?? [];
                 $relLabel = "{$group['label']}/{$file}";
 
                 if (File::exists($targetPath) && ! $force) {
                     if ($this->confirm("  File {$relLabel} already exists. Overwrite?", false)) {
-                        $this->writeStubFile($sourcePath, $targetPath);
+                        $this->writeStubFile($sourcePath, $targetPath, $fileReplacements);
                         $this->line("  ↻ Overwritten: {$relLabel}");
                     } else {
                         $this->line("  ⊘ Skipped: {$relLabel}");
                     }
                 } else {
-                    $this->writeStubFile($sourcePath, $targetPath);
+                    $this->writeStubFile($sourcePath, $targetPath, $fileReplacements);
                     $this->line("  ✓ Installed: {$relLabel}");
                 }
             }

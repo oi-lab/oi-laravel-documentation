@@ -1,12 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import DocumentationHtmlContent from '@/components/documentation/documentation-html-content';
 import DocumentationMarkdownContent from '@/components/documentation/documentation-markdown-content';
 import DocumentationNavigation from '@/components/documentation/documentation-navigation';
 import DocumentationToc from '@/components/documentation/documentation-toc';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import DocumentationLayout from '@/layouts/documentation-layout';
+import dashboard from '@/routes/dashboard';
+import documentation, { show } from '@/routes/documentation';
 
 interface NavigationItem {
     title: string;
@@ -34,6 +36,7 @@ interface ShowProps {
             description?: string;
         };
         markdown: string;
+        html?: string;
         tableOfContents: TocItem[];
     };
     navigation: {
@@ -52,10 +55,10 @@ export default function Show({
     nextPage,
 }: ShowProps) {
     return (
-        <DocumentationLayout>
+        <>
             <Head title={document.frontmatter.title} />
 
-            <div className="grid gap-8 lg:grid-cols-[250px_1fr_250px]">
+            <div className="grid gap-8 lg:grid-cols-[--spacing(64)_1fr_--spacing(64)]">
                 <aside>
                     <DocumentationNavigation
                         sections={navigation.sections}
@@ -79,8 +82,13 @@ export default function Show({
 
                     <Separator />
 
-                    {/* Markdown Content */}
-                    <DocumentationMarkdownContent content={document.markdown} />
+                    {/* Content - rendered server-side to HTML (rendering.markdown_engine = "server")
+                        or client-side from markdown (rendering.markdown_engine = "client", the default) */}
+                    {document.html !== undefined ? (
+                        <DocumentationHtmlContent html={document.html} />
+                    ) : (
+                        <DocumentationMarkdownContent content={document.markdown} />
+                    )}
 
                     {/* Page Navigation */}
                     {(previousPage || nextPage) && (
@@ -163,6 +171,23 @@ export default function Show({
                     />
                 </aside>
             </div>
-        </DocumentationLayout>
+        </>
     );
 }
+
+Show.layout = ({ document, slug }: ShowProps) => ({
+    breadcrumbs: [
+        {
+            title: 'Home',
+            href: dashboard.board(),
+        },
+        {
+            title: 'Documentation',
+            href: documentation.index(),
+        },
+        {
+            title: document.frontmatter.title,
+            href: show(slug),
+        },
+    ],
+});
